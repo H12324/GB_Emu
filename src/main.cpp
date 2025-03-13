@@ -62,9 +62,9 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         filename = argv[1]; // Won't force the file to be .gb
     }
-
+	std::vector<uint8_t> romData;
     try {
-        auto romData = loadByteData(filename); // Load the ROM data verified correctness
+        romData = loadByteData(filename); // Load the ROM data verified correctness
     }
 	catch (const std::runtime_error& e) {
 		std::cerr << e.what() << std::endl;
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
 	}
 
     std::cout << "Starting GB Emulator" << std::endl;
-    GB* gameboy = new GB; // wanted on stack but IDE complains
+    GB *gameboy = new GB(romData); // wanted on stack but IDE complains
     while (true) { // Change to a running flag
         gameboy->run();
 		break; // Remove this eventually

@@ -9,6 +9,10 @@ set(SOURCE_FILES
     src/PPU.cpp
     src/GB.cpp
     src/main.cpp
+    src/CPU.h
+    src/PPU.h
+    src/GB.h
+    src/opcode.h
 )
 
 include_directories(include src)

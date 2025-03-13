@@ -15,8 +15,8 @@ include_directories(include src)
 
 # Debug and Release build types
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "No build type selected, default to Release")
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  message(STATUS "No build type selected, default to Debug")
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
   # Possible values are: Debug, Release, RelWithDebInfo, MinSizeRel
 endif()
 

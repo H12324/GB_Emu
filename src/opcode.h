@@ -4,8 +4,61 @@
 #include <iostream>
 
 
-// Block 0: Misc, 16-
-void NOP();
+// Block 0: Lot's of different OPs 16-bit and imm 8-bit loads, misc, Math
+void NOP(); // Nope, nu-uh, never, not happening
+void STOP(); // I wonder what this does, hmm...
+
+// 16-bit loads
+void LD_r16_nn(uint16_t* dst) {
+	// Load 16-bit immediate value into register
+}
+
+void LD_a16_A(uint16_t* dst) {
+	// Load A into memory address at value in reg dst
+}
+
+void LD_A_a16(uint16_t* src) {
+	// Load value at memory address in reg src into A
+}
+
+void LD_nn_SP(uint16_t* dst) {
+	// Load SP into 16-bit immediate value
+}
+
+// More 16-bit math
+void INC_r16(uint16_t* dst) {
+	// Increment 16-bit register
+}
+void DEC_r16(uint16_t* dst) {
+	// Decrement 16-bit register
+}
+void ADD_HL_r16(uint16_t* src) {
+	// Add 16-bit value to HL
+}
+
+// 8-bit math and loads with immediate values
+void inc_r8(uint8_t* dst) {
+	// Increment 8-bit register
+}
+
+void dec_r8(uint8_t* dst) {
+	// Decrement 8-bit register
+}
+
+void LD_r8_n(uint8_t* dst) {
+	// Load 8-bit immediate value into register
+}
+
+// Rotate and shift functions
+
+// Jump functions
+void JR_n(uint8_t* src) {
+	// Jump relative by signed immediate value
+}
+
+void JR_cc_n(uint8_t* src) {
+	// Conditional jump by signed immediate value
+}
 
 // Block 1: 8-bit loads and HALT (0x40-0x7F)
 void HALT() {
@@ -102,8 +155,17 @@ FunctionPtr r8_ArithTable[] = {
 };
 
 // Block 3: Misc part 2
-void LD_r8_n(uint8_t* dst);
-void LD_r16_nn(uint16_t* dst);
-void LD_r16_A(uint16_t* dst);
-void LD_A_r16(uint16_t* src);
 
+// Immediate math (can likely just reuse the above functions)
+
+// Returns, jumps, and calls
+
+// Push and Pop
+
+// Immediate loads from and to memory
+
+// SP related add and loads
+
+// Dreaded di and ei
+
+// The dreaded 256 0xCB prefixed opcodes

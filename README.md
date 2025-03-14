@@ -2,7 +2,7 @@
 Why finish a project when you can just start a new one!
 
 
-#### SM83 Opcode Progress (127/500)
+### SM83 Opcode Progress (127/500)
 - [ ] 8-bit Loads (63/85)              
 - [ ] 16-bit loads (0/15)         
 - [ ] 8-bit Arithmetic (64/92)           
@@ -11,7 +11,7 @@ Why finish a project when you can just start a new one!
 - [ ] Jumps (0/30)
 - [ ] Control & Misc (0/5)
 
-Overall Plan
+#### Overall Plan
 - [ ] Implement Opcodes
 - [ ] Make timing accurate
 - [ ] PPU + Graphics

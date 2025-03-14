@@ -57,7 +57,7 @@ void CPU::step() {
 		else if (src == 6 || dst == 6) {
             // Unsure if this approach could be dangerous
 			r8[6] = &ram[HL(H, L)]; 
-			numCycles = 2;
+			numCycles++;
         }
 
 		LD_r8_r8(*this, r8[src], r8[dst]);

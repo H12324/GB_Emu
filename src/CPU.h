@@ -12,6 +12,22 @@ public:
     uint8_t readByte();
     void debugPrint(uint8_t opcode);
 
+    // Helpers
+    //void setFlags(uint8_t flags) { F = flags; }
+    void setFlags(bool z, bool n, bool h, bool c) { F = (z << 7) | (n << 6) | (h << 5) | (c << 4); }
+	void setZ(bool z) { F = (F & 0x7F) | (z << 7); }
+	void setN(bool n) { F = (F & 0xBF) | (n << 6); }
+	void setH(bool h) { F = (F & 0xDF) | (h << 5); }
+	void setC(bool c) { F = (F & 0xEF) | (c << 4); }
+    void setA(uint8_t a) { A = a; }
+
+    bool getZ() { return (F >> 7) & 0x01; }
+    bool getN() { return (F >> 6) & 0x01; }
+    bool getH() { return (F >> 5) & 0x01; }
+    bool getC() { return (F >> 4) & 0x01; }
+    uint8_t getFlags() { return F; }
+    uint8_t getA() { return A; }
+
 private:
     //void LD_r8_r8(uint8_t* src, uint8_t* dst);
 

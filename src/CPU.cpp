@@ -16,27 +16,18 @@ CPU::CPU(std::vector<uint8_t>& romData)
 
 }
 
-// Steps to goal/Progress on opcodes
-/*  Note: I used AI to generate these numbers so is probably incorrect
-//  0. Decide Opcode schema and decoding procedure
-//  1. 8-bit Loads (63/63)              STATUS: COMPLETE
-    2. 16-bit loads (9)
-    3. 8-bit Arithmetic (45)
-    4. 16-bit Arithmetic (12)
-    5. Rotates/Shifts (6 + 32 CB)
-    6. Bit Operations (96 CB: pain)
-    7. Jumps (14)
-    8. Control (5)
-    9. Misc (6)
-    10.Make clock accurate timing system
-*/
-
 void CPU::step() {
     uint8_t opcode = readByte();
 	//opcode = 0x41; // Testing purposes
     //opcode = 0x4E;
     //opcode = 0x76;
-	opcode = 0x71;
+	//opcode = 0x71; //
+	//opcode = 0x83; // ADD A E
+    H = 0x1;
+    A = 0x1;
+	opcode = 0x9C; // SBC A H
+    opcode = 0x94; // SUB A H
+	opcode = 0xAC; // XOR A H
 
 	int src = 0;
 	int dst = 0;
@@ -64,32 +55,38 @@ void CPU::step() {
 			HALT();
 		}
 		else if (src == 6 || dst == 6) {
-			r8[6] = &ram[HL(H, L)]; // Look into making macro
+            // Unsure if this approach could be dangerous
+			r8[6] = &ram[HL(H, L)]; 
 			numCycles = 2;
         }
 
 		LD_r8_r8(*this, r8[src], r8[dst]);
 
-		std::cout << "\nAfter Operation: " << std::endl;
-		debugPrint(opcode);
-
 		// TODO: Add clock cycle
 		break;
-    case 0x80:
-        /*Literally 200+ instructions in this case alone*/
-        std::cerr << "Unimplemented opcode: " << opcode << std::endl;
-        exit(1);
+	case 0x80: // Block 2: 8-bit arithmetic
+        src = opcode & 0x07; // operand
+        if (src == 0x06) { // [HL] case
+            r8[6] = &ram[HL(H, L)];
+            numCycles = 2;
+        }
+        //dst = (opcode & 0x78) >> 3;
+		dst = (opcode >> 3) & 0x07; // easier to understand
+		r8_ArithTable[dst](*this, r8[src]);
         break;
 	case 0xC0:
 		/* 8-bit arithmetic */
-        std::cerr << "Unimplemented opcode: " << opcode << std::endl;
+        std::cerr << "Unimplemented opcodes: " << opcode << std::endl;
         exit(1);
 		break;
     default:
-        std::cerr << "Unimplemented opcode: " << opcode << std::endl;
+        std::cerr << "Unimplemented opcodes: " << opcode << std::endl;
 		exit(1);
         break;
     }
+
+    std::cout << "\nAfter Operation: 0x" << std::hex << (uint32_t)opcode <<  std::endl;
+    debugPrint(opcode);
 }
 
 // Reads a byte from memory and increments the PC

@@ -4,6 +4,7 @@
 #include <iomanip>
 
 #define HL(H, L) (((uint32_t)(H) << 8) | ((uint32_t)(L)))
+#define U16(MSB, LSB) (((uint32_t)(MSB) << 8) | ((uint32_t)(LSB)))
 
 CPU::CPU(std::vector<uint8_t>& romData) 
     : PC(0x100), SP(0xFFFE), H(0x01), L(0x4D), F(0xB0),
@@ -23,12 +24,12 @@ void CPU::step() {
     //opcode = 0x76;
 	//opcode = 0x71; //
 	//opcode = 0x83; // ADD A E
-    H = 0x1;
+   /* H = 0x1;
     A = 0x1;
 	opcode = 0x9C; // SBC A H
     opcode = 0x94; // SUB A H
 	opcode = 0xAC; // XOR A H
-
+    */
 	int src = 0;
 	int dst = 0;
 	int numCycles = 1;
@@ -36,11 +37,18 @@ void CPU::step() {
 	std::cout << "Before Operation: " << std::endl;
 	debugPrint(opcode); // Note: PC is already incremented so it should really be one before account for that later
 
-    switch (opcode & (uint8_t)0xC0)
+    switch (opcode & 0xC0)
     {
     case 0x00: // NOP: No OPeration
         /* do nothing, later make it skip 4 tick cycles: 1 clock*/
-		std::cerr << "Unimplemented opcode: " << opcode<< std::endl;
+        if (opcode == 0x00) NOP();
+        else if (opcode == 0x10) STOP();
+        else if (opcode & 0x04 || opcode & 0x0C) { // 8-bit INCs
+			unimplemented_code(opcode);
+        }
+        else {
+            unimplemented_code(opcode);
+        }
         break;
 	case 0x40: // Block 1: LD r8 r8 instructions
 		/* 8-bit loads */ // 0x40-0x7F
@@ -75,13 +83,16 @@ void CPU::step() {
 		r8_ArithTable[dst](*this, r8[src]);
         break;
 	case 0xC0:
-		/* 8-bit arithmetic */
-        std::cerr << "Unimplemented opcodes: " << opcode << std::endl;
-        exit(1);
+        if (opcode == 0xC3) {
+            numCycles += 3;
+			uint8_t LSB = readByte();
+			uint8_t MSB = readByte();
+			JP_nn(*this, U16(MSB, LSB));
+        }
+		else unimplemented_code(opcode);
 		break;
     default:
-        std::cerr << "Unimplemented opcodes: " << opcode << std::endl;
-		exit(1);
+		unimplemented_code(opcode); // Or illegal opcode
         break;
     }
 

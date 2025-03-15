@@ -2,11 +2,23 @@
 
 #include "CPU.h"
 #include <iostream>
+#include <iomanip>
+
+void unimplemented_code(uint16_t opcode=0xFFF) {
+	std::cerr << "Unimplemented opcode: 0x" << std::hex << opcode << std::endl;
+	exit(1);
+}
 
 
 // Block 0: Lot's of different OPs 16-bit and imm 8-bit loads, misc, Math
-void NOP(); // Nope, nu-uh, never, not happening
-void STOP(); // I wonder what this does, hmm...
+void NOP() {
+	// No Operation
+	//unimplemented_code(0x00);
+	// Just go one clock cycle
+} 
+void STOP() {
+	unimplemented_code(0x10);
+}
 
 // 16-bit loads
 void LD_r16_nn(uint16_t* dst) {
@@ -154,11 +166,16 @@ FunctionPtr r8_ArithTable[] = {
 	CP_A_r8
 };
 
+//using CondPtr = void (*)(CPU&, uint8_t*);
 // Block 3: Misc part 2
 
 // Immediate math (can likely just reuse the above functions)
 
 // Returns, jumps, and calls
+void JP_nn(CPU& cpu, uint16_t n16) {
+	// Jump to 16-bit immediate value
+	cpu.setPC(n16);
+}
 
 // Push and Pop
 

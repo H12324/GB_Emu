@@ -20,6 +20,7 @@ public:
 	void setH(bool h) { F = (F & 0xDF) | (h << 5); }
 	void setC(bool c) { F = (F & 0xEF) | (c << 4); }
     void setA(uint8_t a) { A = a; }
+	void setPC(uint16_t pc) { PC = pc; }
 
     bool getZ() { return (F >> 7) & 0x01; }
     bool getN() { return (F >> 6) & 0x01; }

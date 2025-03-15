@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     GB *gameboy = new GB(romData); // wanted on stack but IDE complains
     while (true) { // Change to a running flag
         gameboy->run();
-		break; // Remove this eventually
+		//break; // Remove this eventually
     }
     delete gameboy;
     return 0;

@@ -83,11 +83,27 @@ void CPU::step() {
 		r8_ArithTable[dst](*this, r8[src]);
         break;
 	case 0xC0:
-        if (opcode == 0xC3) {
+
+        // 8-bit immediate arithmetic
+        dst = opcode & 0x07; // Generally grouped by last 3-bits (column mask)
+        if (dst == 0x06) {
+            numCycles++;
+			uint8_t imm8 = readByte(); // I regret not making a u8 typedef
+            uint8_t op = (opcode >> 3) & 07; // learning octal
+			r8_ArithTable[op](*this, &imm8); // Should have just made functions take value
+            break;
+        }
+
+        // Jumps, calls, and returns
+        if (opcode == 0xC3) { // JP imm16
             numCycles += 3;
 			uint8_t LSB = readByte();
 			uint8_t MSB = readByte();
 			JP_nn(*this, U16(MSB, LSB));
+		}
+        else if (opcode == 0xC2) { // JP CC, imm16
+			unimplemented_code(opcode);
+            numCycles += 3;
         }
 		else unimplemented_code(opcode);
 		break;

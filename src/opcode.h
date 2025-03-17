@@ -63,7 +63,7 @@ void LD_r8_n(uint8_t* dst, int n) {
 	*dst = n;
 }
 
-/*
+
 // 16-bit arithmetic
 void INC_r16(CPU& cpu, uint16_t dst) {
 	// Increment 16-bit register
@@ -73,9 +73,15 @@ void DEC_r16(CPU& cpu, uint16_t dst) {
 	// Decrement 16-bit register
 	cpu.setR16(dst, cpu.getR16(dst) - 1);
 }
-void ADD_HL_r16(CPU& cpu, uint16_t* src) {
+void ADD_HL_r16(CPU& cpu, uint8_t src) {
 	// Add 16-bit value to HL
-}*/
+	uint16_t HL = cpu.getR16(2);
+	uint16_t r16 = cpu.getR16(src);
+	uint32_t res = HL + r16;
+
+	cpu.setFlags(cpu.getZ(), 0, ((r16&0xFFF) + (HL & 0xFFF)) > 0x0FFF, res & 0x10000);
+	cpu.setR16(2, res);
+}
 
 // 8-bit arithmetic
 void INC_r8(uint8_t* dst) {

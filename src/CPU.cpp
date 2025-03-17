@@ -31,7 +31,7 @@ void CPU::step() {
         if (opcode == 0x00) NOP(); 
         else if (opcode == 0x10) STOP();
         // 16-bit loads
-        else if (opcode == 0x08 || (opcode & 0x01) == 0x01) {
+        else if (opcode == 0x08 || (opcode & 0x0F) == 0x01) {
             uint16_t nn = getImm16(); // Maybe have this helper update numcycles
             numCycles += 2;
 
@@ -45,11 +45,15 @@ void CPU::step() {
             }
         }
         // 16-bit Arithmetic
-        else if ((opcode & 0x3) == 0x4) { // 8-bit INCs
-			unimplemented_code(opcode);
+        else if ((opcode & 0x7) == 0x3 || (opcode & 0x0F) == 0x9) { // 16-bit INCs
+            numCycles++;
+            dst = (opcode >> 4) & 0x3;
+			if ((opcode & 0x0F) == 0x3) INC_r16(*this, dst);
+			else if ((opcode & 0x0F) == 0xB) DEC_r16(*this, dst);
+			else ADD_HL_r16(*this, dst);
         }
         // 8-bit loads
-        else if ((opcode & 07) == 06) { 
+		else if ((opcode & 07) == 06) { // 8-bit immediate loads
             numCycles++;
 
 			uint8_t imm8 = readByte();
@@ -61,7 +65,7 @@ void CPU::step() {
             }
 			LD_r8_n(r8[dst], imm8); // Could also use setR8(dst, imm8);
         }
-        else if ((opcode & 07) == 02) {
+		else if ((opcode & 07) == 02) { // 8-bit loads from/to memory
             numCycles++;
             dst = (opcode >> 4) & 0x07;
             

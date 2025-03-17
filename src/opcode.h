@@ -60,8 +60,11 @@ void dec_r8(uint8_t* dst) {
 	// Decrement 8-bit register
 }
 
-void LD_r8_n(uint8_t* dst) {
+// Note: some of these functions are redundant like this one
+void LD_r8_n(uint8_t* dst, int n) { 
 	// Load 8-bit immediate value into register
+
+	*dst = n; 
 }
 
 // Rotate and shift functions

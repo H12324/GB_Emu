@@ -54,9 +54,24 @@ void CPU::step() {
                 LD_r16_nn(*this, dst, nn); // Gotta love functions that just call other functions
             }
         }
-        else if ((opcode & 04) == 04) { // 8-bit INCs
+        // 16-bit Arithmetic
+        else if ((opcode & 0x3) == 0x4) { // 8-bit INCs
 			unimplemented_code(opcode);
         }
+        // 8-bit loads
+        else if ((opcode & 06) == 06) { 
+            numCycles++;
+
+			uint8_t imm8 = readByte();
+			dst = opcode & 0x07; // 0x07 is 0000 0111
+            if (dst == 6) { // Really need a more efficient way for this
+                r8[6] = &ram[HL(H, L)];
+                numCycles++;
+            }
+			LD_r8_n(r8[dst], imm8); // Could also use setR8(dst, imm8);
+        }
+		// 8-bit arithmetic
+		//else if ((opcode & 0x3) == 0x2) { // 8-bit INCs
         else {
             unimplemented_code(opcode);
         }

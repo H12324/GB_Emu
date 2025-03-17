@@ -21,8 +21,9 @@ void STOP() {
 }
 
 // 16-bit loads
-void LD_r16_nn(uint16_t* dst) {
+void LD_r16_nn(CPU& cpu, uint16_t dst, uint16_t nn) {
 	// Load 16-bit immediate value into register
+	cpu.setR16(dst, nn);
 }
 
 void LD_a16_A(uint16_t* dst) {
@@ -33,8 +34,10 @@ void LD_A_a16(uint16_t* src) {
 	// Load value at memory address in reg src into A
 }
 
-void LD_nn_SP(uint16_t* dst) {
+void LD_nn_SP(CPU& cpu, uint16_t SP, uint16_t val) {
 	// Load SP into 16-bit immediate value
+	cpu.writeByte(SP & 0xFF, val); // could use getSP but this feels cleaner
+	cpu.writeByte((SP & 0xFF00) >> 8, val + 1);
 }
 
 // More 16-bit math

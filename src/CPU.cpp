@@ -3,9 +3,6 @@
 #include <iostream>
 #include <iomanip>
 
-#define HL(H, L) (((uint32_t)(H) << 8) | ((uint32_t)(L)))
-#define U16(MSB, LSB) (((uint32_t)(MSB) << 8) | ((uint32_t)(LSB)))
-
 CPU::CPU(std::vector<uint8_t>& romData) 
     : PC(0x100), SP(0xFFFE), H(0x01), L(0x4D), F(0xB0),
       A(0x01), B(0x00), C(0x13), D(0x00), E(0xD8)  {
@@ -39,11 +36,25 @@ void CPU::step() {
 
     switch (opcode & 0xC0)
     {
-    case 0x00: // NOP: No OPeration
-        /* do nothing, later make it skip 4 tick cycles: 1 clock*/
-        if (opcode == 0x00) NOP();
+	case 0x00: // Block 0: Lot's of different OPs 16-bit and imm 8-bit loads, misc, Math
+        // Misc
+        if (opcode == 0x00) NOP(); 
         else if (opcode == 0x10) STOP();
-        else if (opcode & 0x04 || opcode & 0x0C) { // 8-bit INCs
+        // 16-bit loads
+        else if (opcode == 0x08 || (opcode & 0x01) == 0x01) {
+            uint16_t nn = getImm16(); // Maybe have this helper update numcycles
+            numCycles += 2;
+
+            if (opcode == 0x08) {
+                numCycles++;
+                LD_nn_SP(*this, SP, nn);
+            }
+            else {
+                dst = (opcode & 0x30) >> 4; // 0x30 is 0011 0000
+                LD_r16_nn(*this, dst, nn); // Gotta love functions that just call other functions
+            }
+        }
+        else if ((opcode & 04) == 04) { // 8-bit INCs
 			unimplemented_code(opcode);
         }
         else {
@@ -119,6 +130,10 @@ void CPU::step() {
 // Reads a byte from memory and increments the PC
 uint8_t CPU::readByte() {
 	return ram[PC++];
+}
+
+void CPU::writeByte(uint8_t val, uint16_t addr) {
+	ram[addr] = val;
 }
 
 void CPU::debugPrint(uint8_t opcode) {

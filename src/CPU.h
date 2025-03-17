@@ -2,6 +2,9 @@
 #include <cstdint>
 #include <vector>
 
+#define HL(H, L) (((uint32_t)(H) << 8) | ((uint32_t)(L)))
+#define U16(MSB, LSB) (((uint32_t)(MSB) << 8) | ((uint32_t)(LSB)))
+
 class CPU { // Maybe more apt to call this the Z80 or SM83
 public:
  //   CPU() {}
@@ -10,6 +13,7 @@ public:
     // CPU functions
     void step();
     uint8_t readByte();
+	void writeByte(uint8_t val, uint16_t addr);
     void debugPrint(uint8_t opcode);
 
     // Helpers
@@ -21,11 +25,41 @@ public:
 	void setC(bool c) { F = (F & 0xEF) | (c << 4); }
     void setA(uint8_t a) { A = a; }
 	void setPC(uint16_t pc) { PC = pc; }
+	void setSP(uint16_t sp) { SP = sp; }
 
     bool getZ() { return (F >> 7) & 0x01; }
     bool getN() { return (F >> 6) & 0x01; }
     bool getH() { return (F >> 5) & 0x01; }
     bool getC() { return (F >> 4) & 0x01; }
+
+    void setR8(uint8_t reg, uint8_t val) {
+       *r8[reg] = val; 
+    }
+
+    void setR16(uint8_t reg, uint16_t val) {
+		// Reg Map; 0: BC, 1: DE, 2: HL, 3: SP, 4: AF, 5/6: HL+/-1
+        if (reg == 3) SP = val; // Adjust 0x08 case
+		else if (reg == 4) { // Maybe incorporate this into r16 array 
+			A = (val & 0xFF00) >> 8;
+			F = val & 0x00FF;
+		}
+        // Add HL+/HL- later when relevant
+		else {
+			*r16[reg] = (val & 0xFF00) >> 8;
+            *r16[reg + 3] = val & 0x00FF;
+		}
+    }
+
+	uint16_t getImm16() {
+		uint8_t LSB = readByte();
+		uint8_t MSB = readByte();
+		return U16(MSB, LSB);
+	}
+
+	uint8_t getImm8() {
+		return readByte();
+	}
+
     uint8_t getFlags() { return F; }
     uint8_t getA() { return A; }
 
@@ -53,7 +87,7 @@ private:
     uint16_t SP;
 
     uint8_t* r8[8] = { &B, &C, &D, &E, &H, &L, nullptr, &A };// 8-bit loads
-
+	uint8_t* r16[6] = { &B, &D, &H, &C, &E, &L}; // 16-bit loads
     /*).
 
     0x0000–0x7FFF: Game ROM.*

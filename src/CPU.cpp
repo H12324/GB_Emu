@@ -16,17 +16,7 @@ CPU::CPU(std::vector<uint8_t>& romData)
 
 void CPU::step() {
     uint8_t opcode = readByte();
-	//opcode = 0x41; // Testing purposes
-    //opcode = 0x4E;
-    //opcode = 0x76;
-	//opcode = 0x71; //
-	//opcode = 0x83; // ADD A E
-   /* H = 0x1;
-    A = 0x1;
-	opcode = 0x9C; // SBC A H
-    opcode = 0x94; // SUB A H
-	opcode = 0xAC; // XOR A H
-    */
+
 	int src = 0;
 	int dst = 0;
 	int numCycles = 1;
@@ -59,16 +49,24 @@ void CPU::step() {
 			unimplemented_code(opcode);
         }
         // 8-bit loads
-        else if ((opcode & 06) == 06) { 
+        else if ((opcode & 07) == 06) { 
             numCycles++;
 
 			uint8_t imm8 = readByte();
-			dst = opcode & 0x07; // 0x07 is 0000 0111
-            if (dst == 6) { // Really need a more efficient way for this
+			dst = (opcode >> 3) & 0x07; 
+            // make into helper?
+            if (dst == 6) { 
                 r8[6] = &ram[HL(H, L)];
                 numCycles++;
             }
 			LD_r8_n(r8[dst], imm8); // Could also use setR8(dst, imm8);
+        }
+        else if ((opcode & 07) == 02) {
+            numCycles++;
+            dst = (opcode >> 4) & 0x07;
+            
+            if ((opcode & 0x0F) == 0x02) LD_r16mem_A(*this, dst); // LD [dst] , A
+            else LD_A_r16mem(*this, dst); // LD A, [src]
         }
 		// 8-bit arithmetic
 		//else if ((opcode & 0x3) == 0x2) { // 8-bit INCs
@@ -145,6 +143,10 @@ void CPU::step() {
 // Reads a byte from memory and increments the PC
 uint8_t CPU::readByte() {
 	return ram[PC++];
+}
+
+uint8_t CPU::readAddr(uint16_t addr) {
+	return ram[addr];
 }
 
 void CPU::writeByte(uint8_t val, uint16_t addr) {

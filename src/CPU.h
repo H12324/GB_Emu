@@ -13,6 +13,7 @@ public:
     // CPU functions
     void step();
     uint8_t readByte();
+	uint8_t readAddr(uint16_t addr);
 	void writeByte(uint8_t val, uint16_t addr);
     void debugPrint(uint8_t opcode);
 
@@ -36,6 +37,11 @@ public:
        *r8[reg] = val; 
     }
 
+	uint16_t getR16(uint8_t reg) {
+		if (reg == 3) return SP;
+		return U16(*r16[reg], *r16[reg + 3]);
+	}
+
     void setR16(uint8_t reg, uint16_t val) {
 		// Reg Map; 0: BC, 1: DE, 2: HL, 3: SP, 4: AF, 5/6: HL+/-1
         if (reg == 3) SP = val; // Adjust 0x08 case
@@ -43,7 +49,6 @@ public:
 			A = (val & 0xFF00) >> 8;
 			F = val & 0x00FF;
 		}
-        // Add HL+/HL- later when relevant
 		else {
 			*r16[reg] = (val & 0xFF00) >> 8;
             *r16[reg + 3] = val & 0x00FF;

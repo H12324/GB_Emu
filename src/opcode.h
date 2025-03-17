@@ -26,46 +26,66 @@ void LD_r16_nn(CPU& cpu, uint16_t dst, uint16_t nn) {
 	cpu.setR16(dst, nn);
 }
 
-void LD_a16_A(uint16_t* dst) {
-	// Load A into memory address at value in reg dst
-}
-
-void LD_A_a16(uint16_t* src) {
-	// Load value at memory address in reg src into A
-}
-
 void LD_nn_SP(CPU& cpu, uint16_t SP, uint16_t val) {
 	// Load SP into 16-bit immediate value
 	cpu.writeByte(SP & 0xFF, val); // could use getSP but this feels cleaner
 	cpu.writeByte((SP & 0xFF00) >> 8, val + 1);
 }
 
-// More 16-bit math
-void INC_r16(uint16_t* dst) {
-	// Increment 16-bit register
-}
-void DEC_r16(uint16_t* dst) {
-	// Decrement 16-bit register
-}
-void ADD_HL_r16(uint16_t* src) {
-	// Add 16-bit value to HL
+// 8-bit immediate and memory addr loads
+void LD_a16_A(CPU& cpu, uint16_t dst) { // Also useful in Block 3
+	// Load A into memory address at value in reg dst
+	cpu.writeByte(cpu.getA(), dst);
 }
 
-// 8-bit math and loads with immediate values
-void inc_r8(uint8_t* dst) {
-	// Increment 8-bit register
+void LD_A_a16(CPU& cpu, uint16_t src) {
+	// Load value at memory address in src into A
+	cpu.setA(cpu.readAddr(src));
 }
 
-void dec_r8(uint8_t* dst) {
-	// Decrement 8-bit register
+void LD_r16mem_A(CPU& cpu, uint8_t dst) {
+	// Load A into memory address at value in reg dst
+	LD_a16_A(cpu, cpu.getR16(std::min(dst, (uint8_t)2)));
+	if (dst == 2) cpu.setR16(2, cpu.getR16(2) + 1); // HL+
+	else if (dst == 3) cpu.setR16(2, cpu.getR16(2) - 1); // HL-
+}
+
+void LD_A_r16mem(CPU& cpu, uint8_t src) {
+	// Load value at memory address in reg src into A
+	LD_A_a16(cpu, cpu.getR16(std::min(src, (uint8_t)2)));
+	if (src == 2) cpu.setR16(2, cpu.getR16(2) + 1);
+	else if (src == 3) cpu.setR16(2, cpu.getR16(2) - 1);
 }
 
 // Note: some of these functions are redundant like this one
-void LD_r8_n(uint8_t* dst, int n) { 
+void LD_r8_n(uint8_t* dst, int n) {
 	// Load 8-bit immediate value into register
-
-	*dst = n; 
+	*dst = n;
 }
+
+/*
+// 16-bit arithmetic
+void INC_r16(CPU& cpu, uint16_t dst) {
+	// Increment 16-bit register
+	cpu.setR16(dst, cpu.getR16(dst) + 1);
+}
+void DEC_r16(CPU& cpu, uint16_t dst) {
+	// Decrement 16-bit register
+	cpu.setR16(dst, cpu.getR16(dst) - 1);
+}
+void ADD_HL_r16(CPU& cpu, uint16_t* src) {
+	// Add 16-bit value to HL
+}*/
+
+// 8-bit arithmetic
+void INC_r8(uint8_t* dst) {
+	// Increment 8-bit register
+}
+
+void DEC_r8(uint8_t* dst) {
+	// Decrement 8-bit register
+}
+
 
 // Rotate and shift functions
 

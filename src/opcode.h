@@ -84,12 +84,20 @@ void ADD_HL_r16(CPU& cpu, uint8_t src) {
 }
 
 // 8-bit arithmetic
-void INC_r8(uint8_t* dst) {
+void INC_r8(CPU& cpu, uint8_t dst) {
 	// Increment 8-bit register
+	uint16_t val = cpu.getR8(dst);
+	uint16_t res = val + 1;
+	cpu.setR8(dst, res);
+	cpu.setFlags((res & 0xFF) == 0, 0, ((val & 0xF) + 1) > 0x0F, cpu.getC());
 }
 
-void DEC_r8(uint8_t* dst) {
+void DEC_r8(CPU& cpu, uint8_t dst) {
 	// Decrement 8-bit register
+	uint8_t val = cpu.getR8(dst);
+	uint8_t res = val - 1;
+	cpu.setR8(dst, res);
+	cpu.setFlags(res == 0, 1, (val & 0x0F) == 0, cpu.getC());
 }
 
 

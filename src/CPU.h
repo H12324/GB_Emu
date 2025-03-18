@@ -34,7 +34,17 @@ public:
     bool getC() { return (F >> 4) & 0x01; }
 
     void setR8(uint8_t reg, uint8_t val) {
-       *r8[reg] = val; 
+        if (reg == 6) { // [HL] memory case
+            ram[HL(H, L)] = val;
+        }
+       else *r8[reg] = val; 
+    }
+
+    uint8_t getR8(uint8_t reg) {
+        if (reg == 6) {
+            return ram[HL(H, L)]; // Alternatively 
+        }
+        else return *r8[reg];
     }
 
 	uint16_t getR16(uint8_t reg) {
@@ -95,21 +105,21 @@ private:
 	uint8_t* r16[6] = { &B, &D, &H, &C, &E, &L}; // 16-bit loads
     /*).
 
-    0x0000–0x7FFF: Game ROM.*
+    0x0000ï¿½0x7FFF: Game ROM.*
 
-    0x8000–0x9FFF: VRAM (Video RAM).
+    0x8000ï¿½0x9FFF: VRAM (Video RAM).
 
-    0xA000–0xBFFF: External RAM (if present in the cartridge).
+    0xA000ï¿½0xBFFF: External RAM (if present in the cartridge).
 
-    0xC000–0xDFFF: Work RAM (WRAM).
+    0xC000ï¿½0xDFFF: Work RAM (WRAM).
 
-    0xE000–0xFDFF: Echo RAM (mirror of WRAM).
+    0xE000ï¿½0xFDFF: Echo RAM (mirror of WRAM).
 
-    0xFE00–0xFE9F: OAM (Sprite Attribute Table).
+    0xFE00ï¿½0xFE9F: OAM (Sprite Attribute Table).
 
-    0xFF00–0xFF7F: I/O Registers.
+    0xFF00ï¿½0xFF7F: I/O Registers.
 
-    0xFF80–0xFFFE: High RAM (HRAM).
+    0xFF80ï¿½0xFFFE: High RAM (HRAM).
 
     0xFFFF: Interrupt Enable Register (IE).
     */

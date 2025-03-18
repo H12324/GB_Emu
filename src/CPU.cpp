@@ -2,6 +2,7 @@
 #include "opcode.h"
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 
 CPU::CPU(std::vector<uint8_t>& romData) 
     : PC(0x100), SP(0xFFFE), H(0x01), L(0x4D), F(0xB0),
@@ -73,7 +74,12 @@ void CPU::step() {
             else LD_A_r16mem(*this, dst); // LD A, [src]
         }
 		// 8-bit arithmetic
-		//else if ((opcode & 0x3) == 0x2) { // 8-bit INCs
+		else if ((opcode & 0x7) == 0x4 || (opcode & 0x07) == 0x5) { // 8-bit INCs
+            dst = (opcode >> 3) & 0x7; 
+            src = opcode & 0x7;
+            if (src == 0x4) INC_r8(*this, dst);
+            else DEC_r8(*this, dst);
+        }
         else {
             unimplemented_code(opcode);
         }

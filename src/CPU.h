@@ -45,6 +45,7 @@ public:
     }
 
 	uint16_t getPC() { return PC; }
+	uint16_t getSP() { return SP; }
 
     uint8_t getR8(uint8_t reg) {
         if (reg == 6) {

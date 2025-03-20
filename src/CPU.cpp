@@ -30,7 +30,7 @@ void CPU::step() {
 	case 0x00: // Block 0: Lot's of different OPs 16-bit and imm 8-bit loads, misc, Math
         // Misc
         if (opcode == 0x00) NOP(); 
-        else if (opcode == 0x10) STOP();
+        else if (opcode == 0x10) STOP(); // Read-byte? stop clock?
 
         // 16-bit loads
         else if (opcode == 0x08 || (opcode & 0x0F) == 0x01) {
@@ -90,10 +90,10 @@ void CPU::step() {
 		else if (opcode == 0x3F) CCF(*this);
 
         // Rotates and shifts
-		/*else if (opcode == 0x07) RLCA();
-		else if (opcode == 0x17) RLA();
-		else if (opcode == 0x0F) RRCA();
-		else if (opcode == 0x1F) RRA();*/
+		else if (opcode == 0x07) RLCA(*this);
+		else if (opcode == 0x17) RLA(*this);
+		else if (opcode == 0x0F) RRCA(*this);
+		else if (opcode == 0x1F) RRA(*this);
 
         // Relative Jumps
         else if (opcode == 0x18 || 
@@ -142,12 +142,10 @@ void CPU::step() {
             r8[6] = &ram[HL(H, L)];
             numCycles = 2;
         }
-        //dst = (opcode & 0x78) >> 3;
-		dst = (opcode >> 3) & 0x07; // easier to understand
+		dst = (opcode >> 3) & 0x07; // Operation
 		r8_ArithTable[dst](*this, r8[src]);
         break;
-	case 0xC0:
-
+	case 0xC0: // Block 3: Misc part 2
         // 8-bit immediate arithmetic
         dst = opcode & 0x07; // Generally grouped by last 3-bits (column mask)
         if (dst == 0x06) {
@@ -168,6 +166,12 @@ void CPU::step() {
         else if (opcode == 0xC2) { // JP CC, imm16
 			unimplemented_code(opcode);
             numCycles += 3;
+        }
+        // SP Load and Add
+        else if (opcode == 0xE8) {
+            numCycles += 3;
+			int8_t n = readByte();
+			ADD_SP_n(*this, n);
         }
 		else unimplemented_code(opcode);
 		break;

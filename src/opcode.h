@@ -134,8 +134,41 @@ void CPL(CPU& cpu) {
 	cpu.setH(1);
 }
 
-
 // Rotate and shift functions
+// Later make more defaul versions but for now
+void RLCA(CPU& cpu) {
+	// Rotate A left 
+	uint8_t A = cpu.getA();
+	uint8_t C = A >> 7;
+	A = (A << 1) | C;
+	cpu.setA(A);
+	cpu.setFlags(0, 0, 0, C);
+}
+void RLA(CPU& cpu) {
+	// Rotate A left through carry
+	uint8_t A = cpu.getA();
+	uint8_t C = A >> 7;
+	A = (A << 1) | cpu.getC();
+	cpu.setA(A);
+	cpu.setFlags(0, 0, 0, C);
+}
+void RRCA(CPU& cpu) {
+	// Rotate A right 
+	uint8_t A = cpu.getA();
+	uint8_t C = A & 0x1;
+	A = (C << 7) | (A >> 1);
+	cpu.setA(A);
+	cpu.setFlags(0, 0, 0, C);
+}
+void RRA(CPU& cpu) {
+	// Rotate A right through carry
+	uint8_t A = cpu.getA();
+	uint8_t C = A & 0x1;
+	A = (cpu.getC() << 7) | (A >> 1);
+	cpu.setA(A);
+	cpu.setFlags(0, 0, 0, C);
+}
+
 
 // Jump functions
 void JR_n(CPU& cpu, int8_t dst) {
@@ -260,6 +293,13 @@ void JP_nn(CPU& cpu, uint16_t n16) {
 // Immediate loads from and to memory
 
 // SP related add and loads
+void ADD_SP_n(CPU& cpu, int8_t n) {
+	// Add signed immediate value to SP
+	uint16_t SP = cpu.getSP();
+	uint32_t res = SP + n;
+	cpu.setSP(res);
+	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + n) > 0xFF);
+}
 
 // Dreaded di and ei
 

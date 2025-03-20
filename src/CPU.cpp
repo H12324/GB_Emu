@@ -18,9 +18,9 @@ CPU::CPU(std::vector<uint8_t>& romData)
 void CPU::step() {
     uint8_t opcode = readByte();
 
-	int src = 0;
-	int dst = 0;
-	int numCycles = 1;
+	uint8_t src = 0;
+	uint8_t dst = 0;
+	uint8_t numCycles = 1;
 
 	std::cout << "Before Operation: " << std::endl;
 	debugPrint(opcode); // Note: PC is already incremented so it should really be one before account for that later
@@ -31,6 +31,7 @@ void CPU::step() {
         // Misc
         if (opcode == 0x00) NOP(); 
         else if (opcode == 0x10) STOP();
+
         // 16-bit loads
         else if (opcode == 0x08 || (opcode & 0x0F) == 0x01) {
             uint16_t nn = getImm16(); // Maybe have this helper update numcycles
@@ -45,6 +46,7 @@ void CPU::step() {
                 LD_r16_nn(*this, dst, nn); // Gotta love functions that just call other functions
             }
         }
+
         // 16-bit Arithmetic
         else if ((opcode & 0x7) == 0x3 || (opcode & 0x0F) == 0x9) { // 16-bit INCs
             numCycles++;
@@ -53,6 +55,7 @@ void CPU::step() {
 			else if ((opcode & 0x0F) == 0xB) DEC_r16(*this, dst);
 			else ADD_HL_r16(*this, dst);
         }
+
         // 8-bit loads
 		else if ((opcode & 07) == 06) { // 8-bit immediate loads
             numCycles++;
@@ -73,6 +76,7 @@ void CPU::step() {
             if ((opcode & 0x0F) == 0x02) LD_r16mem_A(*this, dst); // LD [dst] , A
             else LD_A_r16mem(*this, dst); // LD A, [src]
         }
+
 		// 8-bit arithmetic
 		else if ((opcode & 0x7) == 0x4 || (opcode & 0x07) == 0x5) { // 8-bit INCs
             dst = (opcode >> 3) & 0x7; 
@@ -80,6 +84,17 @@ void CPU::step() {
             if (src == 0x4) INC_r8(*this, dst);
             else DEC_r8(*this, dst);
         }
+		else if (opcode == 0x27) DAA(*this);
+		else if (opcode == 0x2F) CPL(*this);
+        else if (opcode == 0x37) SCF(*this);
+		else if (opcode == 0x3F) CCF(*this);
+
+        // Rotates and shifts
+		/*else if (opcode == 0x07) RLCA();
+		else if (opcode == 0x17) RLA();
+		else if (opcode == 0x0F) RRCA();
+		else if (opcode == 0x1F) RRA();*/
+
         // Relative Jumps
         else if (opcode == 0x18 || 
                 (opcode & 0xE0) == 0x20 && (opcode & 0x07) == 0) {
@@ -107,8 +122,9 @@ void CPU::step() {
         src = (opcode & 0x07); // feels strange using regular ints now
 		dst = (opcode & 0x38) >> 3;
 
-		if (src == 6 && dst == 6) {
+		if (src == 6 && dst == 6) { // should just check if opcode is 0x76
 			HALT();
+            break;
 		}
 		else if (src == 6 || dst == 6) {
             // Unsure if this approach could be dangerous

@@ -33,10 +33,7 @@ public:
     bool getH() { return (F >> 5) & 0x01; }
     bool getC() { return (F >> 4) & 0x01; }
     bool getCond(uint8_t cc) {
-        static const bool conds[] = { // magic
-            !getZ(), getZ(), !getC(), getC()
-        };
-
+        const bool conds[] = {!getZ(), getZ(), !getC(), getC()};
         return (cc < 4) ? conds[cc] : false;
     }
 

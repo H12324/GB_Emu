@@ -100,6 +100,40 @@ void DEC_r8(CPU& cpu, uint8_t dst) {
 	cpu.setFlags(res == 0, 1, (val & 0x0F) == 0, cpu.getC());
 }
 
+void DAA(CPU& cpu) {
+	// Decial Adjust Accumulator (convert Acc result to BCD)
+	uint8_t offset = 0;
+	uint8_t A = cpu.getA();
+
+	bool N = cpu.getN();
+	bool H = cpu.getH();
+	bool C = cpu.getC();
+	
+	if ((!N && (A & 0x0F) > 0x09) || H) offset = 0x06;
+	if ((!N && A > 0x99) || C) {
+		offset |= 0x60;
+		C = true;
+	}
+	
+	A = N ? A - offset : A + offset;
+	cpu.setA(A);
+	cpu.setFlags(A == 0, N, 0, C);
+}
+void SCF(CPU& cpu) {
+	// Set carry flag
+	cpu.setFlags(cpu.getZ(), 0, 0, 1);
+}
+void CCF(CPU& cpu) {
+	//Complement Carry Flag
+	cpu.setFlags(cpu.getZ(), 0, 0, !cpu.getC());
+}
+void CPL(CPU& cpu) {
+	// Completment Accumulator
+	cpu.setA(~cpu.getA());
+	cpu.setN(1);
+	cpu.setH(1);
+}
+
 
 // Rotate and shift functions
 

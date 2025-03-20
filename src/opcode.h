@@ -280,7 +280,7 @@ FunctionPtr r8_ArithTable[] = {
 //using CondPtr = void (*)(CPU&, uint8_t*);
 // Block 3: Misc part 2
 
-// Immediate math (can likely just reuse the above functions)
+// Immediate math (reused ArithTable)
 
 // Returns, jumps, and calls
 void JP_nn(CPU& cpu, uint16_t n16) {
@@ -291,6 +291,25 @@ void JP_nn(CPU& cpu, uint16_t n16) {
 // Push and Pop
 
 // Immediate loads from and to memory
+// Note: LD_A16_A and LD_A_A16 are already defined earlier
+// Could technically get rid of all these but I think it's slightly cleaner to have them
+void LDH_a8_A(CPU& cpu, uint8_t a8) {
+	// Load A into memory address 0xFF00 + a8
+	LD_a16_A(cpu, 0xFF00 + a8);
+}
+void LDH_A_a8(CPU& cpu, uint8_t a8) {
+	// Load value at memory address 0xFF00 + a8 into A
+	LD_A_a16(cpu, 0xFF00 + a8);
+}
+void LDH_C_A(CPU& cpu) {
+	// Load A into memory address 0xFF00 + C
+	LD_a16_A(cpu, 0xFF00 + cpu.getC());
+}
+void LDH_A_C(CPU& cpu) {
+	// Load value at memory address 0xFF00 + C into A
+	LD_A_a16(cpu, 0xFF00 + cpu.getC());
+}
+
 
 // SP related add and loads
 void ADD_SP_n(CPU& cpu, int8_t n) {

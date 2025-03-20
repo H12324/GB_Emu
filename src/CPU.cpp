@@ -115,10 +115,6 @@ void CPU::step() {
         break;
 	case 0x40: // Block 1: LD r8 r8 instructions
 		/* 8-bit loads */ // 0x40-0x7F
-		// All take 1 clock cycle except when [HL] is involved it's 2
-        // loading into itself does nothing but I'll implement it anyway
-		// Exception: LD [HL][HL] 0x76 is HALT, 
-
         src = (opcode & 0x07); // feels strange using regular ints now
 		dst = (opcode & 0x38) >> 3;
 
@@ -127,14 +123,11 @@ void CPU::step() {
             break;
 		}
 		else if (src == 6 || dst == 6) {
-            // Unsure if this approach could be dangerous
 			r8[6] = &ram[HL(H, L)]; 
 			numCycles++;
         }
 
 		LD_r8_r8(*this, r8[src], r8[dst]);
-
-		// TODO: Add clock cycle
 		break;
 	case 0x80: // Block 2: 8-bit arithmetic
         src = opcode & 0x07; // operand
@@ -155,7 +148,7 @@ void CPU::step() {
 			r8_ArithTable[op](*this, &imm8); // Should have just made functions take value
             break;
         }
-
+         
         // Jumps, calls, and returns
         if (opcode == 0xC3) { // JP imm16
             numCycles += 3;
@@ -167,12 +160,34 @@ void CPU::step() {
 			unimplemented_code(opcode);
             numCycles += 3;
         }
+        // Push and Pop Stack
         // SP Load and Add
         else if (opcode == 0xE8) {
             numCycles += 3;
 			int8_t n = readByte();
 			ADD_SP_n(*this, n);
         }
+        // Rest of the 8-bit loads
+        else if (opcode == 0xE0 || opcode == 0xF0) {
+			numCycles+=2;
+			uint8_t a8 = readByte();
+			if (opcode == 0xE0) LDH_a8_A(*this, a8);
+			else LDH_A_a8(*this, a8);
+		}
+        else if (opcode == 0xE2 || opcode == 0xF2) {
+			numCycles++;
+			if (opcode == 0xE2) LDH_C_A(*this);
+			else LDH_A_C(*this);
+        }
+        else if (opcode == 0xEA || opcode == 0xFA) {
+			numCycles += 3;
+			uint8_t LSB = readByte();
+			uint8_t MSB = readByte();
+			if (opcode == 0xEA) LD_a16_A(*this, U16(MSB, LSB));
+			else LD_A_a16(*this, U16(MSB, LSB));
+        }
+        // EI and DI
+        // CB Chasm
 		else unimplemented_code(opcode);
 		break;
     default:

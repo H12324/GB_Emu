@@ -104,12 +104,16 @@ void DEC_r8(CPU& cpu, uint8_t dst) {
 // Rotate and shift functions
 
 // Jump functions
-void JR_n(uint8_t* src) {
+void JR_n(CPU& cpu, int8_t dst) {
 	// Jump relative by signed immediate value
+	cpu.setPC(cpu.getPC() + dst);
 }
 
-void JR_cc_n(uint8_t* src) {
+bool JR_cc_n(CPU& cpu, uint8_t cc, int8_t dst) {
 	// Conditional jump by signed immediate value
+	bool cond = cpu.getCond(cc);
+	if (cond) JR_n(cpu, dst);
+	return cond;
 }
 
 // Block 1: 8-bit loads and HALT (0x40-0x7F)

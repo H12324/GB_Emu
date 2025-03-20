@@ -80,6 +80,20 @@ void CPU::step() {
             if (src == 0x4) INC_r8(*this, dst);
             else DEC_r8(*this, dst);
         }
+        // Relative Jumps
+        else if (opcode == 0x18 || 
+                (opcode & 0xE0) == 0x20 && (opcode & 0x07) == 0) {
+			numCycles++;
+			int8_t n = readByte();
+			if (opcode == 0x18) {
+				numCycles++;
+				JR_n(*this, n);
+			}
+			else {
+				uint8_t cc = (opcode & 0x18) >> 3;
+                if (JR_cc_n(*this, cc, n)) numCycles++;
+			}
+        }
         else {
             unimplemented_code(opcode);
         }

@@ -32,6 +32,13 @@ public:
     bool getN() { return (F >> 6) & 0x01; }
     bool getH() { return (F >> 5) & 0x01; }
     bool getC() { return (F >> 4) & 0x01; }
+    bool getCond(uint8_t cc) {
+        static const bool conds[] = { // magic
+            !getZ(), getZ(), !getC(), getC()
+        };
+
+        return (cc < 4) ? conds[cc] : false;
+    }
 
     void setR8(uint8_t reg, uint8_t val) {
         if (reg == 6) { // [HL] memory case
@@ -39,6 +46,8 @@ public:
         }
        else *r8[reg] = val; 
     }
+
+	uint16_t getPC() { return PC; }
 
     uint8_t getR8(uint8_t reg) {
         if (reg == 6) {

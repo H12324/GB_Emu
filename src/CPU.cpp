@@ -151,7 +151,22 @@ void CPU::step() {
         }
          
         // Jumps, calls, and returns
-        if (opcode == 0xC3) { // JP imm16
+        // - Returns
+		if (opcode == 0xC9) { 
+			numCycles += 3;
+			RET(*this);
+		}
+        else if (opcode == 0xD9) {
+			numCycles += 3;
+			RETI(*this);
+        }
+		else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0) { // RET cc
+			uint8_t cc = (opcode >> 3) & 0x03;
+			numCycles++;
+			if (RET_cc(*this, cc)) numCycles+=2;
+		}
+        // - Jumps
+        else if (opcode == 0xC3) { // JP imm16
             numCycles += 3;
 			uint8_t LSB = readByte();
 			uint8_t MSB = readByte();

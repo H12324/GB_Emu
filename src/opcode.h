@@ -9,7 +9,6 @@ void unimplemented_code(uint16_t opcode=0xFFF) {
 	exit(1);
 }
 
-
 // Block 0: Lot's of different OPs 16-bit and imm 8-bit loads, misc, Math
 void NOP() {
 	// No Operation
@@ -21,7 +20,7 @@ void STOP() {
 }
 
 // 16-bit loads
-void LD_r16_nn(CPU& cpu, uint16_t dst, uint16_t nn) {
+void LD_r16_nn(CPU& cpu, uint8_t dst, uint16_t nn) {
 	// Load 16-bit immediate value into register
 	cpu.setR16(dst, nn);
 }
@@ -65,11 +64,11 @@ void LD_r8_n(uint8_t* dst, int n) {
 
 
 // 16-bit arithmetic
-void INC_r16(CPU& cpu, uint16_t dst) {
+void INC_r16(CPU& cpu, uint8_t dst) {
 	// Increment 16-bit register
 	cpu.setR16(dst, cpu.getR16(dst) + 1);
 }
-void DEC_r16(CPU& cpu, uint16_t dst) {
+void DEC_r16(CPU& cpu, uint8_t dst) {
 	// Decrement 16-bit register
 	cpu.setR16(dst, cpu.getR16(dst) - 1);
 }
@@ -86,8 +85,8 @@ void ADD_HL_r16(CPU& cpu, uint8_t src) {
 // 8-bit arithmetic
 void INC_r8(CPU& cpu, uint8_t dst) {
 	// Increment 8-bit register
-	uint16_t val = cpu.getR8(dst);
-	uint16_t res = val + 1;
+	uint8_t val = cpu.getR8(dst);
+	uint8_t res = val + 1;
 	cpu.setR8(dst, res);
 	cpu.setFlags((res & 0xFF) == 0, 0, ((val & 0xF) + 1) > 0x0F, cpu.getC());
 }
@@ -148,7 +147,8 @@ void RLA(CPU& cpu) {
 	// Rotate A left through carry
 	uint8_t A = cpu.getA();
 	uint8_t C = A >> 7;
-	A = (A << 1) | cpu.getC();
+	uint8_t oldC = cpu.getC();
+	A = (A << 1) | oldC;
 	cpu.setA(A);
 	cpu.setFlags(0, 0, 0, C);
 }
@@ -272,10 +272,45 @@ FunctionPtr r8_ArithTable[] = {
 
 //using CondPtr = void (*)(CPU&, uint8_t*);
 // Block 3: Misc part 2
+// DI and EI
+void DI() {
+	// Disable interrupts
+	unimplemented_code(0xF3);
+	//cpu.setIME(false);
+}
+
+void EI() { // Fix RETI After
+	// Enable interrupts
+	unimplemented_code(0xFB);
+	//cpu.setIME(true);
+}
 
 // Immediate math (reused ArithTable)
 
 // Returns, jumps, and calls
+void RET(CPU& cpu) {
+	// Return from subroutine
+	uint16_t SP = cpu.getSP();
+	uint8_t LSB = cpu.readAddr(SP++);
+	uint8_t MSB = cpu.readAddr(SP++);
+	cpu.setSP(SP);
+	cpu.setPC(U16(MSB, LSB));
+}
+
+bool RET_cc(CPU& cpu, uint8_t cc) {
+	// Conditional return from subroutine
+	bool cond = cpu.getCond(cc);
+	if (cond) RET(cpu);
+	return cond;
+}
+
+void RETI(CPU& cpu) {
+	// Return from interrupt
+	EI();
+	RET(cpu);
+	//cpu.setIME(true);
+}
+
 void JP_nn(CPU& cpu, uint16_t n16) {
 	// Jump to 16-bit immediate value
 	cpu.setPC(n16);
@@ -348,6 +383,4 @@ void LD_HL_SP_n(CPU& cpu, int8_t n) {
 	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + n) > 0xFF);
 }
 
-// Dreaded di and ei
-
-// The dreaded 256 0xCB prefixed opcodes
+// The 256 0xCB prefixed opcodes

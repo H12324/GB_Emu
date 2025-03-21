@@ -335,7 +335,10 @@ bool CALL_cc_nn(CPU& cpu, uint8_t cc, uint16_t n16) {
 	if (cond) CALL_nn(cpu, n16);
 	return cond;
 }
-
+void RST(CPU& cpu, uint8_t tgt) {
+	// Restart
+	CALL_nn(cpu, tgt); 
+}
 // Immediate loads from and to memory
 // Note: LD_A16_A and LD_A_A16 are already defined earlier
 // Could technically get rid of all these but I think it's slightly cleaner to have them

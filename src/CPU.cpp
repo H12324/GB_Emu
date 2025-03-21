@@ -180,13 +180,18 @@ void CPU::step() {
         }
         // - Calls
         else if (opcode == 0xCD) { // CALL imm16
-            numCycles += 3;
+            numCycles += 5;
 			CALL_nn(*this, getImm16());
 		}
         else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0x04) { // CALL CC, imm16
             numCycles += 2;
             uint8_t cc = (opcode >> 3) & 0x03;
 			if (CALL_cc_nn(*this, cc, getImm16())) numCycles+=3;
+        }
+        else if (dst == 0x07) { // RST tgt basically fast CALL
+            numCycles += 3;
+			uint8_t tgt = opcode & 0x78; // 0111 1000
+			RST(*this, tgt); // tgt*8
         }
         // Push and Pop Stack
 		else if (src == 0x1 || src == 0x5) // 0x_1 and 0x_5 are PUSH and POP

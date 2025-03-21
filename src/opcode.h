@@ -296,14 +296,12 @@ void RET(CPU& cpu) {
 	cpu.setSP(SP);
 	cpu.setPC(U16(MSB, LSB));
 }
-
 bool RET_cc(CPU& cpu, uint8_t cc) {
 	// Conditional return from subroutine
 	bool cond = cpu.getCond(cc);
 	if (cond) RET(cpu);
 	return cond;
 }
-
 void RETI(CPU& cpu) {
 	// Return from interrupt
 	EI();
@@ -315,11 +313,26 @@ void JP_nn(CPU& cpu, uint16_t n16) {
 	// Jump to 16-bit immediate value
 	cpu.setPC(n16);
 }
-
 bool JP_nn_cc(CPU& cpu, uint8_t cc, uint16_t n16) {
 	// Jump to HL
 	bool cond = cpu.getCond(cc);
 	if (cond) JP_nn(cpu, n16); // cpu.setPC(n16);
+	return cond;
+}
+
+void CALL_nn(CPU& cpu, uint16_t n16) {
+	// Call subroutine at 16-bit immediate value
+	uint16_t SP = cpu.getSP();
+	uint16_t PC = cpu.getPC();
+	cpu.writeByte((PC >> 8) & 0xFF, --SP); // Write MSB
+	cpu.writeByte(PC & 0xFF, --SP); // Write LSB
+	cpu.setSP(SP);
+	cpu.setPC(n16); // JP nn
+}
+bool CALL_cc_nn(CPU& cpu, uint8_t cc, uint16_t n16) {
+	// Conditional call subroutine at 16-bit immediate value
+	bool cond = cpu.getCond(cc);
+	if (cond) CALL_nn(cpu, n16);
 	return cond;
 }
 

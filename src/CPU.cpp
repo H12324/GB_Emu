@@ -152,29 +152,31 @@ void CPU::step() {
          
         // Jumps, calls, and returns
         // - Returns
-		if (opcode == 0xC9) { 
-			numCycles += 3;
-			RET(*this);
-		}
-        else if (opcode == 0xD9) {
-			numCycles += 3;
-			RETI(*this);
+        if (opcode == 0xC9) {
+            numCycles += 3;
+            RET(*this);
         }
-		else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0) { // RET cc
-			uint8_t cc = (opcode >> 3) & 0x03;
-			numCycles++;
-			if (RET_cc(*this, cc)) numCycles+=2;
-		}
+        else if (opcode == 0xD9) {
+            numCycles += 3;
+            RETI(*this);
+        }
+        else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0) { // RET cc
+            uint8_t cc = (opcode >> 3) & 0x03;
+            numCycles++;
+            if (RET_cc(*this, cc)) numCycles += 2;
+        }
         // - Jumps
         else if (opcode == 0xC3) { // JP imm16
             numCycles += 3;
-			uint8_t LSB = readByte();
-			uint8_t MSB = readByte();
-			JP_nn(*this, U16(MSB, LSB));
-		}
-        else if (opcode == 0xC2) { // JP CC, imm16
-			unimplemented_code(opcode);
-            numCycles += 3;
+			uint16_t nn = getImm16();
+            JP_nn(*this, nn);
+        }
+		else if (opcode == 0xE9) JP_nn(*this, HL(H, L)); // JP HL
+        else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0) { // JP CC, imm16
+            numCycles += 2;
+            uint16_t nn = getImm16();
+			uint8_t cc = (opcode >> 3) & 0x03;
+			if (JP_nn_cc(*this, cc, nn)) numCycles++;
         }
         // Push and Pop Stack
 		else if (src == 0x1 || src == 0x5) // 0x_1 and 0x_5 are PUSH and POP

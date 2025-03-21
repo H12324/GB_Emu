@@ -316,6 +316,13 @@ void JP_nn(CPU& cpu, uint16_t n16) {
 	cpu.setPC(n16);
 }
 
+bool JP_nn_cc(CPU& cpu, uint8_t cc, uint16_t n16) {
+	// Jump to HL
+	bool cond = cpu.getCond(cc);
+	if (cond) JP_nn(cpu, n16); // cpu.setPC(n16);
+	return cond;
+}
+
 // Immediate loads from and to memory
 // Note: LD_A16_A and LD_A_A16 are already defined earlier
 // Could technically get rid of all these but I think it's slightly cleaner to have them

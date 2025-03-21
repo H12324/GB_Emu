@@ -239,8 +239,25 @@ void CPU::step() {
 			else LD_A_a16(*this, U16(MSB, LSB));
         }
         // EI and DI
+		else if (opcode == 0xF3) DI(*this);
+		else if (opcode == 0xFB) EI(*this);
+		
         // CB Chasm
-		else unimplemented_code(opcode);
+		else if (opcode == 0xCB) {
+			numCycles++;
+			uint8_t cbOp = readByte(); // 0xCB Opcode
+            uint8_t reg = cbOp & 0x07;
+            uint8_t block = cbOp >> 6;
+            uint8_t bit = (cbOp >> 3) & 0x07;
+
+            if (reg == 0x06) numCycles += 2; // [HL] case
+            if (block == 0) r8_ManipTable[bit](*this, reg);
+            else {
+				if (block == 1 && reg == 0x06) numCycles--; // BIT has 3 cycles in [HL] for some reason
+				r8_BitTable[block](*this, bit, reg);
+            }
+		}
+		else unimplemented_code(opcode); // Fake upcodes can't hurt you
 		break;
     default:
 		unimplemented_code(opcode); // Or illegal opcode

@@ -273,13 +273,13 @@ FunctionPtr r8_ArithTable[] = {
 //using CondPtr = void (*)(CPU&, uint8_t*);
 // Block 3: Misc part 2
 // DI and EI
-void DI() {
+void DI(CPU& cpu) {
 	// Disable interrupts
 	unimplemented_code(0xF3);
 	//cpu.setIME(false);
 }
 
-void EI() { // Fix RETI After
+void EI(CPU& cpu) { // Fix RETI After
 	// Enable interrupts
 	unimplemented_code(0xFB);
 	//cpu.setIME(true);
@@ -304,7 +304,7 @@ bool RET_cc(CPU& cpu, uint8_t cc) {
 }
 void RETI(CPU& cpu) {
 	// Return from interrupt
-	EI();
+	EI(cpu);
 	RET(cpu);
 	//cpu.setIME(true);
 }
@@ -407,3 +407,38 @@ void LD_HL_SP_n(CPU& cpu, int8_t n) {
 }
 
 // The 256 0xCB prefixed opcodes
+void RLC_r8(CPU& cpu, uint8_t r8) {
+	// Rotate left through carry
+
+}
+
+void RRC_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void RL_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void RR_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void SLA_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void SRA_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void SWAP_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void SRL_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+
+void BIT_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { unimplemented_code(); }
+void RES_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { unimplemented_code(); }
+void SET_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { unimplemented_code(); }
+
+// Note: could replace with FunctionPtr if I bother to refactor 
+//		arithmetic to use uint8_t or use uint8_t* for all manips
+void(*r8_ManipTable[])(CPU&, uint8_t) = {
+	RLC_r8,
+	RRC_r8,
+	RL_r8,
+	RR_r8,
+	SLA_r8,
+	SRA_r8,
+	SWAP_r8,
+	SRL_r8
+};
+
+void(*r8_BitTable[])(CPU&, uint8_t, uint8_t) {
+	BIT_b_r8,
+	RES_b_r8,
+	SET_b_r8
+};

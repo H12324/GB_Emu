@@ -56,6 +56,7 @@ public:
 
 	uint16_t getR16(uint8_t reg) {
 		if (reg == 3) return SP;
+		else if (reg == 4) return U16(A, F);
 		return U16(*r16[reg], *r16[reg + 3]);
 	}
 

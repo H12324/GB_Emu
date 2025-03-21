@@ -141,6 +141,7 @@ void CPU::step() {
 	case 0xC0: // Block 3: Misc part 2
         // 8-bit immediate arithmetic
         dst = opcode & 0x07; // Generally grouped by last 3-bits (column mask)
+        src = opcode & 0x0F; // Alternate column mask 
         if (dst == 0x06) {
             numCycles++;
 			uint8_t imm8 = readByte(); // I regret not making a u8 typedef
@@ -161,6 +162,16 @@ void CPU::step() {
             numCycles += 3;
         }
         // Push and Pop Stack
+		else if (src == 0x1 || src == 0x5) // 0x_1 and 0x_5 are PUSH and POP
+		{
+			numCycles+=2;
+			uint8_t reg = (opcode >> 4) & 0x3;
+			if (src == 0x1) POP_r16(*this, reg);
+            else {
+				numCycles++;
+                PUSH_r16(*this, reg);
+            }
+		}
         // SP Load and Add
         else if (opcode == 0xE8) {
             numCycles += 3;

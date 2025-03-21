@@ -198,13 +198,6 @@ void LD_r8_r8(CPU& cpu, uint8_t* src, uint8_t* dst) {
 // Note all normally 1 cycle, but 2 if src is [HL]
 void ADD_A_r8(CPU& cpu, uint8_t* src) {
 	uint32_t res = cpu.getA() + *src;
-	/* Alternative Approach
-	* cpu.setFlags(0)
-	if (!res) cpu.setZ(1);
-	cpu.setN(0);
-	if ((cpu.getA() & 0x0F) + (*src & 0x0F) > 0x0F) cpu.setH(1);
-	if (res > 0xFF) cpu.setH(1);*/
-
 	cpu.setFlags(res == 0, // Z if zero
 				 0,		   // N is 0
 		         ((cpu.getA() & 0x0F) + (*src & 0x0F)) > 0x0F, // H if overflow from bit 3
@@ -309,14 +302,28 @@ void LDH_A_C(CPU& cpu) {
 }
 
 // Push and Pop
-void PUSH_r16() {
+void PUSH_r16(CPU& cpu, uint8_t reg) {
 	// Push 16-bit register onto stack
-	unimplemented_code();
+	// Reg = 3 is indexing AF in this case confusing but it's how it is
+	if (reg == 3) reg = 4; // AF Case
+	uint16_t val = cpu.getR16(reg);
+
+	DEC_r16(cpu, 3); // DEC SP
+	cpu.writeByte((val >> 8) & 0xFF, cpu.getSP()); // Write MSB
+	DEC_r16(cpu, 3); // DEC SP
+	cpu.writeByte(val & 0xFF, cpu.getSP()); // Write LSB
 }
 
-void POP_r16() {
+void POP_r16(CPU& cpu, uint8_t reg) {
 	// Pop 16-bit register from stack
-	unimplemented_code();
+	if (reg == 3) reg = 4; // AF Case
+	uint16_t SP = cpu.getSP();
+	uint8_t LSB = cpu.readAddr(SP++); // Read LSB
+	uint8_t MSB = cpu.readAddr(SP++); // Read MSB
+	cpu.setSP(SP);
+
+	if (reg == 4) LSB &= 0xF0; // Assure last 4 bits of F are 0
+	cpu.setR16(reg, U16(MSB, LSB));
 }
 
 // SP related add and loads

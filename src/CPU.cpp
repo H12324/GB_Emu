@@ -167,6 +167,15 @@ void CPU::step() {
 			int8_t n = readByte();
 			ADD_SP_n(*this, n);
         }
+        else if (opcode == 0xF8) {
+            numCycles += 2;
+            int8_t n = readByte();
+			LD_HL_SP_n(*this, n);
+        }
+		else if (opcode == 0xF9) {
+			numCycles++;
+			LD_SP_HL(*this);
+		}
         // Rest of the 8-bit loads
         else if (opcode == 0xE0 || opcode == 0xF0) {
 			numCycles+=2;

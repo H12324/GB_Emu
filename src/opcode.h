@@ -288,8 +288,6 @@ void JP_nn(CPU& cpu, uint16_t n16) {
 	cpu.setPC(n16);
 }
 
-// Push and Pop
-
 // Immediate loads from and to memory
 // Note: LD_A16_A and LD_A_A16 are already defined earlier
 // Could technically get rid of all these but I think it's slightly cleaner to have them
@@ -310,6 +308,16 @@ void LDH_A_C(CPU& cpu) {
 	LD_A_a16(cpu, 0xFF00 + cpu.getC());
 }
 
+// Push and Pop
+void PUSH_r16() {
+	// Push 16-bit register onto stack
+	unimplemented_code();
+}
+
+void POP_r16() {
+	// Pop 16-bit register from stack
+	unimplemented_code();
+}
 
 // SP related add and loads
 void ADD_SP_n(CPU& cpu, int8_t n) {
@@ -317,6 +325,19 @@ void ADD_SP_n(CPU& cpu, int8_t n) {
 	uint16_t SP = cpu.getSP();
 	uint32_t res = SP + n;
 	cpu.setSP(res);
+	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + n) > 0xFF);
+}
+
+void LD_SP_HL(CPU& cpu) {
+	// Load HL into SP
+	cpu.setSP(cpu.getR16(2)); // Could have made a reg:: enum
+}
+
+void LD_HL_SP_n(CPU& cpu, int8_t n) {
+	// Load SP + signed immediate value into HL
+	uint16_t SP = cpu.getSP();
+	uint32_t res = SP + n;
+	cpu.setR16(2, res);
 	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + n) > 0xFF);
 }
 

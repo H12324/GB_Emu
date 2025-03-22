@@ -408,21 +408,83 @@ void LD_HL_SP_n(CPU& cpu, int8_t n) {
 
 // The 256 0xCB prefixed opcodes
 void RLC_r8(CPU& cpu, uint8_t r8) {
-	// Rotate left through carry
-
+	// Rotate R8 left 
+	uint8_t A = cpu.getR8(r8);
+	uint8_t C = A >> 7;
+	A = (A << 1) | C;
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
 }
 
-void RRC_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
-void RL_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
-void RR_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
-void SLA_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
-void SRA_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
-void SWAP_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
-void SRL_r8(CPU& cpu, uint8_t r8) { unimplemented_code(); }
+void RRC_r8(CPU& cpu, uint8_t r8) {
+	// Rotate R8 right 
+	uint8_t A = cpu.getR8(r8);
+	uint8_t C = A & 0x1;
+	A = (C << 7) | (A >> 1);
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
+}
+void RL_r8(CPU& cpu, uint8_t r8) {
+	// Rotate R8 left through carry
+	uint8_t A = cpu.getR8(r8);
+	uint8_t C = A >> 7;
+	uint8_t oldC = cpu.getC();
+	A = (A << 1) | oldC;
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
+}
+void RR_r8(CPU& cpu, uint8_t r8) {
+	// Rotate R8 right through carry
+	uint8_t A = cpu.getR8(r8);
+	uint8_t C = A & 0x1;
+	A = (cpu.getC() << 7) | (A >> 1);
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
+}
+void SLA_r8(CPU& cpu, uint8_t r8) {
+	// Shift R8 left
+	uint8_t A = cpu.getR8(r8);
+	uint8_t C = A >> 7;
+	A = A << 1;
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
+}
+void SRA_r8(CPU& cpu, uint8_t r8) {
+	// Shift R8 right aritmetically
+	uint8_t A = cpu.getR8(r8);
+	uint16_t C = A & 0x1;
+	A = (A & 0x80) | (A >> 1);
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
+}
+void SWAP_r8(CPU& cpu, uint8_t r8) {
+	// Swap upper and lower bits in r8
+	uint8_t A = cpu.getR8(r8);
+	A = (A << 4) | (A >> 4);
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, 0);
+}
+void SRL_r8(CPU& cpu, uint8_t r8) {
+	// Shift R8 right logically
+	uint8_t A = cpu.getR8(r8);
+	uint16_t C = A & 0x1;
+	A = A >> 1;
+	cpu.setR8(r8, A);
+	cpu.setFlags(!A, 0, 0, C);
+}
 
-void BIT_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { unimplemented_code(); }
-void RES_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { unimplemented_code(); }
-void SET_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { unimplemented_code(); }
+void BIT_b_r8(CPU& cpu, uint8_t b, uint8_t r8) {
+	cpu.setFlags((cpu.getR8(r8) & (1 << b)) == 0, 0, 1, cpu.getC());
+}
+void RES_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { 
+	// Reset bit b in register r8
+	cpu.setR8(r8, cpu.getR8(r8) & ~(1 << b));
+}
+void SET_b_r8(CPU& cpu, uint8_t b, uint8_t r8) { 
+	// Set bit b in register r8
+	// In old style would be *r8 |= (1 << b); which may be more readable
+	cpu.setR8(r8, cpu.getR8(r8) | (1 << b));
+}
 
 // Note: could replace with FunctionPtr if I bother to refactor 
 //		arithmetic to use uint8_t or use uint8_t* for all manips

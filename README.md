@@ -2,7 +2,7 @@
 Why finish a project when you can just start a new one!
 
 
-### SM83 Opcode Progress    (496/500)
+### SM83 Opcode Progress    (497/500)
 - [X] 8-bit Loads           (85/85)              
 - [X] 16-bit loads          (15/15)         
 - [X] 8-bit Arithmetic      (92/92)           

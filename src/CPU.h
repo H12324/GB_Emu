@@ -88,6 +88,9 @@ public:
 
     void setIME(bool cond) {IME = cond;}
 
+    void setDebug(bool cond) { debug = cond; }
+	bool debugEnabled() { return debug; }
+
 private:
     //void LD_r8_r8(uint8_t* src, uint8_t* dst);
 
@@ -113,6 +116,8 @@ private:
 
     uint8_t* r8[8] = { &B, &C, &D, &E, &H, &L, nullptr, &A };// 8-bit loads
 	uint8_t* r16[6] = { &B, &D, &H, &C, &E, &L}; // 16-bit loads
+   
+	bool debug = false;
     /*).
 
     0x0000�0x7FFF: Game ROM.*

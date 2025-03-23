@@ -43,7 +43,7 @@ std::vector<uint8_t> loadByteData(const std::string& filename) {
         throw std::runtime_error("Failed to open '" + filename + "'.");
     }
     
-    //std::cout << "Using the file: " << fileToLoad << std::endl;
+    std::cout << "Using the file: " << fileToLoad << std::endl;
 
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -59,6 +59,7 @@ std::vector<uint8_t> loadByteData(const std::string& filename) {
 
 int main(int argc, char* argv[]) {
     std::string filename = "../roms/doesnt_exist.gb"; // doesn't exist (Also all code assumes you're running from the build directory)
+    filename = "../roms/06.gb";
     if (argc > 1) {
         filename = argv[1]; // Won't force the file to be .gb
     }

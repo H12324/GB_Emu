@@ -8,8 +8,6 @@ CPU::CPU(std::vector<uint8_t>& romData)
     : PC(0x100), SP(0xFFFE), H(0x01), L(0x4D), F(0xB0),
       A(0x01), B(0x00), C(0x13), D(0x00), E(0xD8)  {
 
-	// Skip boot rom
-
 	std::memcpy(ram, romData.data(), romData.size());
 	// TODO: Initialize rest of the ram later once it is more relevant
     ram[0xFF44] = 0x90; // Skips waiting for V-blank or something
@@ -21,9 +19,6 @@ void CPU::step() {
 	uint8_t src = 0;
 	uint8_t dst = 0;
 	uint8_t numCycles = 1;
-
-	//std::cout << "Before Operation: " << std::endl;
-	//debugPrint(opcode); // Note: PC is already incremented so it should really be one before account for that later
 
     switch (opcode & 0xC0)
     {
@@ -254,7 +249,7 @@ void CPU::step() {
             if (block == 0) r8_ManipTable[bit](*this, reg);
             else {
 				if (block == 1 && reg == 0x06) numCycles--; // BIT has 3 cycles in [HL] for some reason
-				r8_BitTable[block](*this, bit, reg);
+                r8_BitTable[block](*this, bit, reg);
             }
 		}
 		else unimplemented_code(opcode); // Fake upcodes can't hurt you
@@ -263,9 +258,6 @@ void CPU::step() {
 		unimplemented_code(opcode); // Or illegal opcode
         break;
     }
-
-    //std::cout << "\nAfter Operation: 0x" << std::hex << (uint32_t)opcode <<  std::endl;
-    //debugPrint(opcode);
 }
 
 // Reads a byte from memory and increments the PC
@@ -278,6 +270,12 @@ uint8_t CPU::readAddr(uint16_t addr) {
 }
 
 void CPU::writeByte(uint8_t val, uint16_t addr) {
+    // Intercept serial output, won't work with [HL] arithmetic though
+	if (addr == 0xFF02 && (val & 0x81) == 0x81) {
+		char c = ram[0xFF01];
+		std::cout << c;
+        ram[0xFF02] &= 0x7F;
+	}
 	ram[addr] = val;
 }
 
@@ -305,23 +303,3 @@ void CPU::debugPrint() {
 
     std::cout << std::endl;
 }
-
-
-/*
-void CPU::debugPrint(uint8_t opcode) {
-    std::cout << "Debug State:" << std::endl;
-    std::cout << "  Next Opcode: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(opcode) << std::endl;
-    std::cout << "  A: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(A) << std::endl;
-    std::cout << "  F: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(F) << " (ZNHC: "
-        << ((F & 0x80) ? "1" : "0") << ((F & 0x40) ? "1" : "0") << ((F & 0x20) ? "1" : "0") << ((F & 0x10) ? "1" : "0") << ")" << std::endl; // Displays flags
-    std::cout << "  B: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(B) << std::endl;
-    std::cout << "  C: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(C) << std::endl;
-    std::cout << "  D: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(D) << std::endl;
-    std::cout << "  E: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(E) << std::endl;
-    std::cout << "  H: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(H) << std::endl;
-    std::cout << "  L: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(L) << std::endl;
-    std::cout << "  HL: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(HL(H,L)) << std::endl;
-    std::cout << "  [HL]: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(ram[HL(H,L)]) << std::endl;
-    std::cout << "  PC: 0x" << std::hex << std::setw(4) << std::setfill('0') << PC << std::endl; // should decrement to account; tis a future issue.
-    std::cout << "  SP: 0x" << std::hex << std::setw(4) << std::setfill('0') << SP << std::endl;
-}*/

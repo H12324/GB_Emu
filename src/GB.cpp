@@ -3,6 +3,7 @@
 GB::GB(std::vector<uint8_t>& romData) {
     // Add a load ROM function
 	cpu = new CPU(romData);
+	cpu->setDebug(false);
 	// Could choose to store romData in GB class
 }
 
@@ -11,6 +12,6 @@ GB::~GB() {
 }
 
 void GB::run() {
-	cpu->debugPrint();
+	if (cpu->debugEnabled()) cpu->debugPrint();
     cpu->step();
 }

@@ -24,7 +24,7 @@ std::vector<uint8_t> loadByteData(const std::string& filename) {
     std::string fileToLoad = filename;
 
     if (!std::filesystem::exists(fileToLoad)) {
-        std::cout << "File: " << fileToLoad << " does not exist looking for alternative..." << std::endl;
+        //std::cout << "File: " << fileToLoad << " does not exist looking for alternative..." << std::endl;
         std::string directory = std::filesystem::path(filename).parent_path().string();
 
         if (directory.empty()) directory = "../roms";
@@ -35,7 +35,7 @@ std::vector<uint8_t> loadByteData(const std::string& filename) {
             throw std::runtime_error("No GB files found");
         }
 
-		std::cout << "Found file: " << fileToLoad << std::endl;
+		//std::cout << "Found file: " << fileToLoad << std::endl;
     }
 
     std::ifstream file(fileToLoad, std::ios::binary | std::ios::ate);
@@ -43,7 +43,7 @@ std::vector<uint8_t> loadByteData(const std::string& filename) {
         throw std::runtime_error("Failed to open '" + filename + "'.");
     }
     
-    std::cout << "Using the file: " << fileToLoad << std::endl;
+    //std::cout << "Using the file: " << fileToLoad << std::endl;
 
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-    std::cout << "Starting GB Emulator" << std::endl;
+    //std::cout << "Starting GB Emulator" << std::endl;
     GB *gameboy = new GB(romData); // wanted on stack but IDE complains
     while (true) { // Change to a running flag
         gameboy->run();

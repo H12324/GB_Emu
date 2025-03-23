@@ -197,8 +197,8 @@ void LD_r8_r8(CPU& cpu, uint8_t* src, uint8_t* dst) {
 // Block 2: 8-bit arithmetic (0x80-0xBF)
 // Note all normally 1 cycle, but 2 if src is [HL]
 void ADD_A_r8(CPU& cpu, uint8_t* src) {
-	uint32_t res = cpu.getA() + *src;
-	cpu.setFlags(res == 0, // Z if zero
+	uint32_t res = cpu.getA() + *src; // Should have had it be u8 to avoid Z flag bugs
+	cpu.setFlags((res & 0xFF) == 0, // Z if zero
 				 0,		   // N is 0
 		         ((cpu.getA() & 0x0F) + (*src & 0x0F)) > 0x0F, // H if overflow from bit 3
 				 res > 0xFF // C set if overflow from bit 7
@@ -208,7 +208,7 @@ void ADD_A_r8(CPU& cpu, uint8_t* src) {
 
 void ADC_A_r8(CPU& cpu, uint8_t* src) {
 	uint32_t res = cpu.getA() + *src + cpu.getC();
-	cpu.setFlags(!res, 0, ((cpu.getA() & 0x0F) + (*src & 0x0F) + cpu.getC()) & 0x10, res & 0x100);
+	cpu.setFlags(!(res & 0xFF), 0, ((cpu.getA() & 0x0F) + (*src & 0x0F) + cpu.getC()) & 0x10, res & 0x100);
 	cpu.setA(res);
 }
 
@@ -217,7 +217,7 @@ void SUB_A_r8(CPU& cpu, uint8_t* src) {
 	uint8_t r8 = *src;
 	uint32_t res = cpu.getA() - *src;
 	
-	cpu.setFlags(!res, 1, (r8 & 0x0F) > (A & 0x0F), r8 > A); // looks cleaner than spamming getA() and *src
+	cpu.setFlags(!(res & 0xFF), 1, (r8 & 0x0F) > (A & 0x0F), r8 > A); // looks cleaner than spamming getA() and *src
 	cpu.setA(res);
 }
 
@@ -228,7 +228,7 @@ void SBC_A_r8(CPU& cpu, uint8_t* src) {
 	uint8_t C = cpu.getC();
 	uint32_t res = A - r8 - cpu.getC();
 
-	cpu.setFlags(!res, 1, C + (r8 & 0x0F) > (A & 0x0F), r8 + C > A); 
+	cpu.setFlags(!(res & 0xFF), 1, C + (r8 & 0x0F) > (A & 0x0F), r8 + C > A); 
 	cpu.setA(res);
 }
 // Experiment with alternative function since I can reuse with immediates
@@ -254,7 +254,7 @@ void CP_A_r8(CPU& cpu, uint8_t* src) {
 	uint8_t A = cpu.getA();
 	uint8_t r8 = *src;
 	uint32_t res = A - r8;
-	cpu.setFlags(!res, 1, (A & 0x0F) < (r8 & 0x0F), A < r8);
+	cpu.setFlags(!(res & 0xFF), 1, (A & 0x0F) < (r8 & 0x0F), A < r8);
 }
 
 // Function pointers for above calls
@@ -275,8 +275,8 @@ FunctionPtr r8_ArithTable[] = {
 // DI and EI
 void DI(CPU& cpu) {
 	// Disable interrupts
-	unimplemented_code(0xF3);
-	//cpu.setIME(false);
+	//unimplemented_code(0xF3);
+	cpu.setIME(false);
 }
 
 void EI(CPU& cpu) { // Fix RETI After

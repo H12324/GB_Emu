@@ -15,7 +15,7 @@ public:
     uint8_t readByte();
 	uint8_t readAddr(uint16_t addr);
 	void writeByte(uint8_t val, uint16_t addr);
-    void debugPrint(uint8_t opcode);
+    void debugPrint();
 
     // Helpers
     //void setFlags(uint8_t flags) { F = flags; }
@@ -86,6 +86,8 @@ public:
     uint8_t getFlags() { return F; }
     uint8_t getA() { return A; }
 
+    void setIME(bool cond) {IME = cond;}
+
 private:
     //void LD_r8_r8(uint8_t* src, uint8_t* dst);
 
@@ -98,7 +100,7 @@ private:
     uint8_t E;
     uint8_t H;
     uint8_t L;
-
+    bool IME = false;
 	/* // Thinking these may be unneccesary
     uint16_t AF;
     uint16_t BC;

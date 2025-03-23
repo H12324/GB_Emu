@@ -12,7 +12,7 @@ CPU::CPU(std::vector<uint8_t>& romData)
 
 	std::memcpy(ram, romData.data(), romData.size());
 	// TODO: Initialize rest of the ram later once it is more relevant
-
+    ram[0xFF44] = 0x90; // Skips waiting for V-blank or something
 }
 
 void CPU::step() {
@@ -22,8 +22,8 @@ void CPU::step() {
 	uint8_t dst = 0;
 	uint8_t numCycles = 1;
 
-	std::cout << "Before Operation: " << std::endl;
-	debugPrint(opcode); // Note: PC is already incremented so it should really be one before account for that later
+	//std::cout << "Before Operation: " << std::endl;
+	//debugPrint(opcode); // Note: PC is already incremented so it should really be one before account for that later
 
     switch (opcode & 0xC0)
     {
@@ -172,7 +172,7 @@ void CPU::step() {
             JP_nn(*this, nn);
         }
 		else if (opcode == 0xE9) JP_nn(*this, HL(H, L)); // JP HL
-        else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0) { // JP CC, imm16
+        else if ((opcode & 0xE0) == 0xC0 && (opcode & 0x07) == 0x2) { // JP CC, imm16
             numCycles += 2;
             uint16_t nn = getImm16();
 			uint8_t cc = (opcode >> 3) & 0x03;
@@ -264,8 +264,8 @@ void CPU::step() {
         break;
     }
 
-    std::cout << "\nAfter Operation: 0x" << std::hex << (uint32_t)opcode <<  std::endl;
-    debugPrint(opcode);
+    //std::cout << "\nAfter Operation: 0x" << std::hex << (uint32_t)opcode <<  std::endl;
+    //debugPrint(opcode);
 }
 
 // Reads a byte from memory and increments the PC
@@ -281,6 +281,33 @@ void CPU::writeByte(uint8_t val, uint16_t addr) {
 	ram[addr] = val;
 }
 
+// Alternate debugPrint to match GB Doctor
+void CPU::debugPrint() {
+    std::cout << std::hex << std::uppercase << std::setfill('0');
+
+    std::cout << "A:" << std::setw(2) << static_cast<int>(A) << " ";
+    std::cout << "F:" << std::setw(2) << static_cast<int>(F) << " ";
+    std::cout << "B:" << std::setw(2) << static_cast<int>(B) << " ";
+    std::cout << "C:" << std::setw(2) << static_cast<int>(C) << " ";
+    std::cout << "D:" << std::setw(2) << static_cast<int>(D) << " ";
+    std::cout << "E:" << std::setw(2) << static_cast<int>(E) << " ";
+    std::cout << "H:" << std::setw(2) << static_cast<int>(H) << " ";
+    std::cout << "L:" << std::setw(2) << static_cast<int>(L) << " ";
+    std::cout << "SP:" << std::setw(4) << SP << " ";
+    std::cout << "PC:" << std::setw(4) << PC << " ";
+
+    // Print PCMEM (PC, PC+1, PC+2, PC+3)
+    std::cout << "PCMEM:" 
+              << std::setw(2) << static_cast<int>(ram[PC]) << ","
+              << std::setw(2) << static_cast<int>(ram[PC + 1]) << ","
+              << std::setw(2) << static_cast<int>(ram[PC + 2]) << ","
+              << std::setw(2) << static_cast<int>(ram[PC + 3]);
+
+    std::cout << std::endl;
+}
+
+
+/*
 void CPU::debugPrint(uint8_t opcode) {
     std::cout << "Debug State:" << std::endl;
     std::cout << "  Next Opcode: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(opcode) << std::endl;
@@ -297,4 +324,4 @@ void CPU::debugPrint(uint8_t opcode) {
     std::cout << "  [HL]: 0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(ram[HL(H,L)]) << std::endl;
     std::cout << "  PC: 0x" << std::hex << std::setw(4) << std::setfill('0') << PC << std::endl; // should decrement to account; tis a future issue.
     std::cout << "  SP: 0x" << std::hex << std::setw(4) << std::setfill('0') << SP << std::endl;
-}
+}*/

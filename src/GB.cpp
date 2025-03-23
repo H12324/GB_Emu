@@ -11,5 +11,6 @@ GB::~GB() {
 }
 
 void GB::run() {
+	cpu->debugPrint();
     cpu->step();
 }

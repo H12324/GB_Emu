@@ -270,7 +270,6 @@ FunctionPtr r8_ArithTable[] = {
 	CP_A_r8
 };
 
-//using CondPtr = void (*)(CPU&, uint8_t*);
 // Block 3: Misc part 2
 // DI and EI
 void DI(CPU& cpu) {
@@ -390,7 +389,7 @@ void ADD_SP_n(CPU& cpu, int8_t n) {
 	uint16_t SP = cpu.getSP();
 	uint32_t res = SP + n;
 	cpu.setSP(res);
-	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + n) > 0xFF);
+	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + (n & 0xFF)) > 0xFF);
 }
 
 void LD_SP_HL(CPU& cpu) {
@@ -403,7 +402,7 @@ void LD_HL_SP_n(CPU& cpu, int8_t n) {
 	uint16_t SP = cpu.getSP();
 	uint32_t res = SP + n;
 	cpu.setR16(2, res);
-	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + n) > 0xFF);
+	cpu.setFlags(0, 0, ((SP & 0x0F) + (n & 0x0F)) > 0x0F, ((SP & 0xFF) + (n & 0xFF)) > 0xFF);
 }
 
 // The 256 0xCB prefixed opcodes

@@ -3,17 +3,33 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include <algorithm>
 
 CPU::CPU(std::vector<uint8_t>& romData) 
-    : PC(0x100), SP(0xFFFE), H(0x01), L(0x4D), F(0xB0),
-      A(0x01), B(0x00), C(0x13), D(0x00), E(0xD8)  {
+    : A(0x01), F(0xB0), B(0x00), C(0x13), D(0x00), E(0xD8),
+      H(0x01), L(0x4D), PC(0x100), SP(0xFFFE) {
 
-	std::memcpy(ram, romData.data(), romData.size());
+    rom = romData;
+    romBankCount = std::max<uint8_t>(1, static_cast<uint8_t>(rom.size() / 0x4000));
+	std::memcpy(ram, romData.data(), std::min<size_t>(romData.size(), 0x8000));
 	// TODO: Initialize rest of the ram later once it is more relevant
     ram[0xFF44] = 0x90; // Skips waiting for V-blank or something
 }
 
 void CPU::step() {
+    if (serviceInterrupt()) return;
+
+    if (halted || stopped) {
+        if (!interruptPending()) {
+            tickTimers(1);
+            return;
+        }
+
+        halted = false;
+        stopped = false;
+        if (serviceInterrupt()) return;
+    }
+
     uint8_t opcode = readByte();
 
 	uint8_t src = 0;
@@ -25,7 +41,7 @@ void CPU::step() {
 	case 0x00: // Block 0: Lot's of different OPs 16-bit and imm 8-bit loads, misc, Math
         // Misc
         if (opcode == 0x00) NOP(); 
-        else if (opcode == 0x10) STOP(); // Read-byte? stop clock?
+        else if (opcode == 0x10) STOP(*this); // Read-byte? stop clock?
 
         // 16-bit loads
         else if (opcode == 0x08 || (opcode & 0x0F) == 0x01) {
@@ -57,12 +73,8 @@ void CPU::step() {
 
 			uint8_t imm8 = readByte();
 			dst = (opcode >> 3) & 0x07; 
-            // make into helper?
-            if (dst == 6) { 
-                r8[6] = &ram[HL(H, L)];
-                numCycles++;
-            }
-			LD_r8_n(r8[dst], imm8); // Could also use setR8(dst, imm8);
+            if (dst == 6) numCycles++;
+			setR8(dst, imm8);
         }
 		else if ((opcode & 07) == 02) { // 8-bit loads from/to memory
             numCycles++;
@@ -92,7 +104,7 @@ void CPU::step() {
 
         // Relative Jumps
         else if (opcode == 0x18 || 
-                (opcode & 0xE0) == 0x20 && (opcode & 0x07) == 0) {
+                ((opcode & 0xE0) == 0x20 && (opcode & 0x07) == 0)) {
 			numCycles++;
 			int8_t n = readByte();
 			if (opcode == 0x18) {
@@ -114,20 +126,19 @@ void CPU::step() {
 		dst = (opcode & 0x38) >> 3;
 
 		if (src == 6 && dst == 6) { // should just check if opcode is 0x76
-			HALT();
+			HALT(*this);
             break;
 		}
-		else if (src == 6 || dst == 6) {
-			r8[6] = &ram[HL(H, L)]; 
-			numCycles++;
-        }
+		else if (src == 6 || dst == 6) numCycles++;
 
-		LD_r8_r8(*this, r8[src], r8[dst]);
+		setR8(dst, getR8(src));
 		break;
 	case 0x80: // Block 2: 8-bit arithmetic
         src = opcode & 0x07; // operand
+        uint8_t hlVal;
         if (src == 0x06) { // [HL] case
-            r8[6] = &ram[HL(H, L)];
+            hlVal = getR8(6);
+            r8[6] = &hlVal;
             numCycles = 2;
         }
 		dst = (opcode >> 3) & 0x07; // Operation
@@ -185,7 +196,7 @@ void CPU::step() {
         }
         else if (dst == 0x07) { // RST tgt basically fast CALL
             numCycles += 3;
-			uint8_t tgt = opcode & 0x78; // 0111 1000
+			uint8_t tgt = opcode & 0x38; // 0011 1000
 			RST(*this, tgt); // tgt*8
         }
         // Push and Pop Stack
@@ -249,7 +260,7 @@ void CPU::step() {
             if (block == 0) r8_ManipTable[bit](*this, reg);
             else {
 				if (block == 1 && reg == 0x06) numCycles--; // BIT has 3 cycles in [HL] for some reason
-                r8_BitTable[block](*this, bit, reg);
+                r8_BitTable[block - 1](*this, bit, reg);
             }
 		}
 		else unimplemented_code(opcode); // Fake upcodes can't hurt you
@@ -258,22 +269,97 @@ void CPU::step() {
 		unimplemented_code(opcode); // Or illegal opcode
         break;
     }
+
+    tickTimers(numCycles);
+    updateIMEAfterInstruction();
+}
+
+bool CPU::serviceInterrupt() {
+    uint8_t pending = ram[0xFFFF] & ram[0xFF0F] & 0x1F;
+    if (!IME || pending == 0) return false;
+
+    halted = false;
+    stopped = false;
+    IME = false;
+    imeEnableDelay = 0;
+
+    uint8_t interrupt = 0;
+    while (((pending >> interrupt) & 0x1) == 0) interrupt++;
+
+    ram[0xFF0F] &= ~(1 << interrupt);
+    writeByte((PC >> 8) & 0xFF, --SP);
+    writeByte(PC & 0xFF, --SP);
+    PC = 0x40 + interrupt * 0x08;
+    return true;
+}
+
+void CPU::tickTimers(uint8_t machineCycles) {
+    const uint16_t cycles = machineCycles * 4;
+
+    divCounter += cycles;
+    ram[0xFF04] = divCounter >> 8;
+
+    if ((ram[0xFF07] & 0x04) == 0) return;
+
+    static constexpr uint16_t periods[] = {1024, 16, 64, 256};
+    timerCounter += cycles;
+    const uint16_t period = periods[ram[0xFF07] & 0x03];
+
+    while (timerCounter >= period) {
+        timerCounter -= period;
+        if (ram[0xFF05] == 0xFF) {
+            ram[0xFF05] = ram[0xFF06];
+            ram[0xFF0F] |= 0x04;
+        }
+        else {
+            ram[0xFF05]++;
+        }
+    }
 }
 
 // Reads a byte from memory and increments the PC
 uint8_t CPU::readByte() {
-	return ram[PC++];
+    if (haltBug) {
+        haltBug = false;
+        return readAddr(PC);
+    }
+	return readAddr(PC++);
 }
 
 uint8_t CPU::readAddr(uint16_t addr) {
+    if (addr < 0x4000) {
+        return addr < rom.size() ? rom[addr] : 0xFF;
+    }
+
+    if (addr < 0x8000) {
+        size_t bankAddr = static_cast<size_t>(currentRomBank) * 0x4000 + (addr - 0x4000);
+        return bankAddr < rom.size() ? rom[bankAddr] : 0xFF;
+    }
+
 	return ram[addr];
 }
 
 void CPU::writeByte(uint8_t val, uint16_t addr) {
+    if (addr < 0x8000) {
+        if (addr >= 0x2000 && addr < 0x4000) {
+            uint8_t bank = val & 0x1F;
+            if (bank == 0) bank = 1;
+            currentRomBank = bank % romBankCount;
+            if (currentRomBank == 0) currentRomBank = 1;
+        }
+        return;
+    }
+
+    if (addr == 0xFF04) {
+        divCounter = 0;
+        ram[addr] = 0;
+        return;
+    }
+
     // Intercept serial output, won't work with [HL] arithmetic though
 	if (addr == 0xFF02 && (val & 0x81) == 0x81) {
 		char c = ram[0xFF01];
-		std::cout << c;
+		std::cout << c << std::flush;
         ram[0xFF02] &= 0x7F;
 	}
 	ram[addr] = val;

@@ -16,6 +16,8 @@ public:
 	uint8_t readAddr(uint16_t addr);
 	void writeByte(uint8_t val, uint16_t addr);
     void debugPrint();
+    bool serviceInterrupt();
+    void tickTimers(uint8_t machineCycles);
 
     // Helpers
     //void setFlags(uint8_t flags) { F = flags; }
@@ -39,7 +41,7 @@ public:
 
     void setR8(uint8_t reg, uint8_t val) {
         if (reg == 6) { // [HL] memory case
-            ram[HL(H, L)] = val;
+            writeByte(val, HL(H, L));
         }
        else *r8[reg] = val; 
     }
@@ -49,7 +51,7 @@ public:
 
     uint8_t getR8(uint8_t reg) {
         if (reg == 6) {
-            return ram[HL(H, L)]; // Alternatively 
+            return readAddr(HL(H, L)); // Alternatively 
         }
         else return *r8[reg];
     }
@@ -86,7 +88,19 @@ public:
     uint8_t getFlags() { return F; }
     uint8_t getA() { return A; }
 
-    void setIME(bool cond) {IME = cond;}
+    bool interruptPending() { return (ram[0xFFFF] & ram[0xFF0F] & 0x1F) != 0; }
+    bool getIME() { return IME; }
+    void setIME(bool cond) {
+        IME = cond;
+        if (!cond) imeEnableDelay = 0;
+    }
+    void enableIMEAfterNextInstruction() { imeEnableDelay = 2; }
+    void updateIMEAfterInstruction() {
+        if (imeEnableDelay > 0 && --imeEnableDelay == 0) IME = true;
+    }
+    void setHalted(bool cond) { halted = cond; }
+    void setStopped(bool cond) { stopped = cond; }
+    void triggerHaltBug() { haltBug = true; }
 
     void setDebug(bool cond) { debug = cond; }
 	bool debugEnabled() { return debug; }
@@ -104,6 +118,12 @@ private:
     uint8_t H;
     uint8_t L;
     bool IME = false;
+    uint8_t imeEnableDelay = 0;
+    bool halted = false;
+    bool stopped = false;
+    bool haltBug = false;
+    uint16_t divCounter = 0;
+    uint16_t timerCounter = 0;
 	/* // Thinking these may be unneccesary
     uint16_t AF;
     uint16_t BC;
@@ -117,7 +137,7 @@ private:
     uint8_t* r8[8] = { &B, &C, &D, &E, &H, &L, nullptr, &A };// 8-bit loads
 	uint8_t* r16[6] = { &B, &D, &H, &C, &E, &L}; // 16-bit loads
    
-	bool debug = false;
+    bool debug = false;
     /*).
 
     0x0000�0x7FFF: Game ROM.*
@@ -139,5 +159,8 @@ private:
     0xFFFF: Interrupt Enable Register (IE).
     */
     uint8_t ram[0x10000] = {0}; // 32kb rom, 8kb vram, external ram, internal ram, pain, i/o
+    std::vector<uint8_t> rom;
+    uint8_t currentRomBank = 1;
+    uint8_t romBankCount = 2;
 
 };

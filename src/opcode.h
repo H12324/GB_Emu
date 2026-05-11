@@ -15,8 +15,9 @@ void NOP() {
 	//unimplemented_code(0x00);
 	// Just go one clock cycle
 } 
-void STOP() {
-	unimplemented_code(0x10);
+void STOP(CPU& cpu) {
+	// STOP consumes the following padding byte before entering low-power mode.
+	cpu.readByte();
 }
 
 // 16-bit loads
@@ -184,12 +185,12 @@ bool JR_cc_n(CPU& cpu, uint8_t cc, int8_t dst) {
 }
 
 // Block 1: 8-bit loads and HALT (0x40-0x7F)
-void HALT() {
-	std::cerr << "HALT instruction not implemented" << std::endl;
-	exit(1);
+void HALT(CPU& cpu) {
+	if (!cpu.getIME() && cpu.interruptPending()) cpu.triggerHaltBug();
+	else cpu.setHalted(true);
 }
 
-void LD_r8_r8(CPU& cpu, uint8_t* src, uint8_t* dst) {
+void LD_r8_r8(CPU&, uint8_t* src, uint8_t* dst) {
 	*dst = *src;
 }
 
@@ -280,8 +281,7 @@ void DI(CPU& cpu) {
 
 void EI(CPU& cpu) { // Fix RETI After
 	// Enable interrupts
-	unimplemented_code(0xFB);
-	//cpu.setIME(true);
+	cpu.enableIMEAfterNextInstruction();
 }
 
 // Immediate math (reused ArithTable)
@@ -303,9 +303,8 @@ bool RET_cc(CPU& cpu, uint8_t cc) {
 }
 void RETI(CPU& cpu) {
 	// Return from interrupt
-	EI(cpu);
 	RET(cpu);
-	//cpu.setIME(true);
+	cpu.setIME(true);
 }
 
 void JP_nn(CPU& cpu, uint16_t n16) {
@@ -351,11 +350,11 @@ void LDH_A_a8(CPU& cpu, uint8_t a8) {
 }
 void LDH_C_A(CPU& cpu) {
 	// Load A into memory address 0xFF00 + C
-	LD_a16_A(cpu, 0xFF00 + cpu.getC());
+	LD_a16_A(cpu, 0xFF00 + cpu.getR8(1));
 }
 void LDH_A_C(CPU& cpu) {
 	// Load value at memory address 0xFF00 + C into A
-	LD_A_a16(cpu, 0xFF00 + cpu.getC());
+	LD_A_a16(cpu, 0xFF00 + cpu.getR8(1));
 }
 
 // Push and Pop
